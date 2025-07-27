@@ -1,0 +1,3 @@
+Try to economize tokens by:
+1. Avoiding big summaries after each task
+2. Deviating off task without asking for user input
