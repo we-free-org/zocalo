@@ -19,6 +19,7 @@
     "@supabase/supabase-js": "^2.52.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "dotenv": "^17.2.1",
     "lucide-react": "^0.525.0",
     "mobx": "^6.13.7",
@@ -26,6 +27,7 @@
     "mobx-state-tree": "^7.0.2",
     "next": "15.4.4",
     "react": "19.1.0",
+    "react-day-picker": "^9.8.1",
     "react-dom": "19.1.0",
     "supabase": "^2.31.8",
     "tailwind-merge": "^3.3.1"
