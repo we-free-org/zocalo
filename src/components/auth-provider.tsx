@@ -4,6 +4,7 @@ import { useEffect, ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { observer } from 'mobx-react-lite'
 import { useUserStore, useSpaceStore } from '@/stores'
+import { checkCurrentUserProfileCompletion, shouldRedirectToProfileCompletion } from '@/lib/profile-utils'
 import { Loader2 } from 'lucide-react'
 
 interface AuthProviderProps {
@@ -44,9 +45,26 @@ const AuthProviderComponent = ({
         await spaceStore.loadSpaces(userStore.user.id)
       }
 
-      // If profile is required but not found
+      // Check if profile completion is needed for authenticated users
+      if (userStore.isAuthenticated && userStore.user?.id) {
+        try {
+          const profileStatus = await checkCurrentUserProfileCompletion()
+          
+          if (shouldRedirectToProfileCompletion(profileStatus)) {
+            // Don't redirect if we're already on the complete-profile page
+            if (window.location.pathname !== '/auth/complete-profile') {
+              router.push('/auth/complete-profile')
+              return
+            }
+          }
+        } catch (err) {
+          console.error('Failed to check profile completion in auth provider:', err)
+        }
+      }
+
+      // If profile is required but not found (legacy check)
       if (requireProfile && userStore.isAuthenticated && !userStore.hasProfile) {
-        router.push('/setup') // or wherever profile setup happens
+        router.push('/auth/complete-profile')
         return
       }
     }

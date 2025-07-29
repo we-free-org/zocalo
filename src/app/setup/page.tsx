@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { isSetupCompleted } from '@/lib/supabase/settings'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -24,6 +25,7 @@ interface SetupFormData {
 export default function SetupPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [pageLoading, setPageLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState<SetupFormData>({
     instanceName: '',
@@ -35,6 +37,27 @@ export default function SetupPage() {
     allowPublicSignup: true,
     requireEmailConfirmation: true
   })
+
+  // Check if setup has already been completed
+  useEffect(() => {
+    const checkSetupStatus = async () => {
+      try {
+        const setupComplete = await isSetupCompleted()
+        if (setupComplete) {
+          // Setup already completed, redirect to dashboard
+          router.push('/dashboard')
+          return
+        }
+      } catch (error) {
+        console.error('Error checking setup status:', error)
+        // Continue to show setup page if there's an error
+      } finally {
+        setPageLoading(false)
+      }
+    }
+
+    checkSetupStatus()
+  }, [router])
 
   const handleInputChange = (field: keyof SetupFormData) => (
     e: React.ChangeEvent<HTMLInputElement>
@@ -73,17 +96,37 @@ export default function SetupPage() {
     }
   }
 
+  if (pageLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="flex items-center space-x-2">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Checking setup status...</span>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Setup Zocalo</CardTitle>
-          <CardDescription>
-            Configure your Zocalo instance and create the administrator account
-          </CardDescription>
+      <Card className="w-full max-w-md shadow-xl border-0 bg-white">
+        <CardHeader className="text-center space-y-6 pb-8">
+          {/* Orange Zocalo Logo */}
+          <div className="mx-auto">
+            <div className="text-4xl font-bold text-orange-500">
+              zocalo
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <CardTitle className="text-3xl font-bold text-gray-900">Setup Zocalo</CardTitle>
+            <CardDescription className="text-gray-600 text-lg">
+              Configure your Zocalo instance and create the administrator account
+            </CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {/* Instance Configuration */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Instance Configuration</h3>
@@ -97,6 +140,7 @@ export default function SetupPage() {
                   onChange={handleInputChange('instanceName')}
                   placeholder="My Organization"
                   required
+                  className="rounded-lg border-gray-200 focus:border-orange-500 focus:ring-orange-500"
                 />
               </div>
 
@@ -109,6 +153,7 @@ export default function SetupPage() {
                   onChange={handleInputChange('instanceDomain')}
                   placeholder="https://zocalo.mycompany.com"
                   required
+                  className="rounded-lg border-gray-200 focus:border-orange-500 focus:ring-orange-500"
                 />
               </div>
             </div>
@@ -117,7 +162,7 @@ export default function SetupPage() {
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Administrator Account</h3>
               
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="adminFirstName">First Name</Label>
                   <Input
@@ -126,6 +171,7 @@ export default function SetupPage() {
                     value={formData.adminFirstName}
                     onChange={handleInputChange('adminFirstName')}
                     required
+                    className="rounded-lg border-gray-200 focus:border-orange-500 focus:ring-orange-500"
                   />
                 </div>
                 <div>
@@ -136,6 +182,7 @@ export default function SetupPage() {
                     value={formData.adminLastName}
                     onChange={handleInputChange('adminLastName')}
                     required
+                    className="rounded-lg border-gray-200 focus:border-orange-500 focus:ring-orange-500"
                   />
                 </div>
               </div>
@@ -148,6 +195,7 @@ export default function SetupPage() {
                   value={formData.adminEmail}
                   onChange={handleInputChange('adminEmail')}
                   required
+                  className="rounded-lg border-gray-200 focus:border-orange-500 focus:ring-orange-500"
                 />
               </div>
 
@@ -160,6 +208,7 @@ export default function SetupPage() {
                   onChange={handleInputChange('adminPassword')}
                   minLength={8}
                   required
+                  className="rounded-lg border-gray-200 focus:border-orange-500 focus:ring-orange-500"
                 />
               </div>
             </div>
@@ -192,14 +241,14 @@ export default function SetupPage() {
             </div>
 
             {error && (
-              <Alert variant="destructive">
+              <Alert variant="destructive" className="border-red-200 bg-red-50 text-red-800 rounded-lg">
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
 
             <Button
               type="submit"
-              className="w-full"
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-full py-3 font-semibold transition-all duration-200 shadow-md hover:shadow-lg"
               disabled={isLoading}
             >
               {isLoading ? (

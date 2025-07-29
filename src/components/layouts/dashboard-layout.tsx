@@ -10,12 +10,14 @@ interface DashboardLayoutProps {
   children: ReactNode
   defaultSection?: string
   defaultSpace?: string
+  hideSpaceControls?: boolean
 }
 
 function DashboardLayoutComponent({ 
   children, 
   defaultSection = 'home',
-  defaultSpace = 'General'
+  defaultSpace = 'General',
+  hideSpaceControls = false
 }: DashboardLayoutProps) {
   const userStore = useUserStore()
   const spaceStore = useSpaceStore()
@@ -60,6 +62,7 @@ function DashboardLayoutComponent({
         <TopBar 
           currentSpace={spaceStore.currentSpaceName}
           onSpaceChange={handleSpaceChange}
+          hideSpaceSelector={hideSpaceControls}
         />
         
         {/* Main content */}

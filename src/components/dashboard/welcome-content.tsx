@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Users, Hash, Calendar, FileText, Vote, ArrowRight } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Plus, Users, Hash, Calendar, FileText, Vote, MessageCircle, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { getGlobalSettings } from '@/lib/supabase/settings'
@@ -16,6 +17,7 @@ export function WelcomeContent({
   onSectionChange = () => {} 
 }: WelcomeContentProps) {
   const [instanceName, setInstanceName] = useState('Zocalo Instance')
+  const router = useRouter()
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -47,6 +49,14 @@ export function WelcomeContent({
       color: 'text-green-600'
     },
     {
+      title: 'Start Conversations',
+      description: 'Connect with team members through direct messages and group conversations.',
+      icon: MessageCircle,
+      action: 'View Messages',
+      section: 'conversations',
+      color: 'text-yellow-600'
+    },
+    {
       title: 'Schedule Events',
       description: 'Plan meetings, workshops, and important dates to keep everyone aligned and informed.',
       icon: Calendar,
@@ -71,6 +81,17 @@ export function WelcomeContent({
       color: 'text-blue-600'
     }
   ]
+
+  const handleSectionNavigation = (section: string) => {
+    onSectionChange(section) // Still call the parent handler for any state management
+    
+    // Navigate to the appropriate route
+    if (section === 'home') {
+      router.push('/dashboard')
+    } else {
+      router.push(`/dashboard/${section}`)
+    }
+  }
 
   return (
     <div className="flex-1 p-8 overflow-auto">
@@ -114,7 +135,7 @@ export function WelcomeContent({
                     <Button 
                       variant="outline" 
                       className="w-full group-hover:bg-[rgb(255,113,67)] group-hover:text-white group-hover:border-[rgb(255,113,67)] transition-colors"
-                      onClick={() => onSectionChange(feature.section)}
+                      onClick={() => handleSectionNavigation(feature.section)}
                     >
                       {feature.action}
                       <ArrowRight className="ml-2 h-4 w-4" />

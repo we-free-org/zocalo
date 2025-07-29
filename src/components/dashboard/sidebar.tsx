@@ -10,13 +10,10 @@ import {
   Vote, 
   MessageCircle, 
   Users, 
-  User,
-  Sun,
-  Moon
+  User
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useTheme } from '@/lib/theme-context'
-import { Button } from '@/components/ui/button'
+import Image from 'next/image'
 
 interface SidebarProps {
   currentSection: string
@@ -30,8 +27,6 @@ interface NavItem {
 }
 
 export function Sidebar({ currentSection, onSectionChange }: SidebarProps) {
-  const { theme, setTheme } = useTheme()
-
   const mainSections: NavItem[] = [
     { id: 'home', label: 'Home', icon: Home },
     { id: 'channels', label: 'Channels', icon: Hash },
@@ -42,8 +37,7 @@ export function Sidebar({ currentSection, onSectionChange }: SidebarProps) {
 
   const lowerSections: NavItem[] = [
     { id: 'conversations', label: 'Conversations', icon: MessageCircle },
-    { id: 'members', label: 'Members', icon: Users },
-    { id: 'account', label: 'Account', icon: User },
+    { id: 'members', label: 'Members', icon: Users }
   ]
 
   const pathname = usePathname()
@@ -82,14 +76,11 @@ export function Sidebar({ currentSection, onSectionChange }: SidebarProps) {
     )
   }
 
-  const toggleTheme = () => {
-    setTheme(theme === 'light' ? 'dark' : 'light')
-  }
-
   return (
     <div className="w-20 bg-card border-r flex flex-col py-6">
       {/* Main sections */}
-      <div className="flex-1 space-y-3 px-2 mt-20">
+      <Image src="/logo.svg" alt="zocalo" width={30} height={30} className="mx-auto mb-6" />
+      <div className="flex-1 space-y-3 px-2 ">
         {mainSections.map((item) => (
           <NavButton key={item.id} item={item} />
         ))}
@@ -103,28 +94,6 @@ export function Sidebar({ currentSection, onSectionChange }: SidebarProps) {
         {lowerSections.map((item) => (
           <NavButton key={item.id} item={item} />
         ))}
-      </div>
-
-      {/* Theme toggle at bottom */}
-      <div className="px-2 mt-6">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={toggleTheme}
-          className="w-full p-3 h-auto hover:bg-accent group relative"
-          title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-        >
-          {theme === 'light' ? (
-            <Moon className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-          ) : (
-            <Sun className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-          )}
-          
-          {/* Tooltip */}
-          <div className="absolute left-full ml-2 px-2 py-1 bg-popover text-popover-foreground text-sm rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 border">
-            {theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
-          </div>
-        </Button>
       </div>
     </div>
   )

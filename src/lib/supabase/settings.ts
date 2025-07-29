@@ -44,4 +44,55 @@ export async function getGlobalSettings(): Promise<GlobalSettings> {
     requireEmailConfirmation: settingsMap.require_email_confirmation !== false,
     setupCompleted: settingsMap.setup_completed === true
   }
+}
+
+/**
+ * Check if initial setup has been completed
+ * Setup is considered complete if:
+ * 1. instance_name is different from default "Zocalo Instance", OR
+ * 2. There are more than 1 users in the system
+ */
+export async function isSetupCompleted(): Promise<boolean> {
+  try {
+    // Check settings for setup_completed flag first
+    const { data: setupFlag } = await supabase
+      .from('settings')
+      .select('value')
+      .eq('key', 'setup_completed')
+      .eq('scope', 'global')
+      .single()
+
+    if (setupFlag?.value === true) {
+      return true
+    }
+
+    // Check if instance name has been changed from default
+    const { data: instanceNameSetting } = await supabase
+      .from('settings')
+      .select('value')
+      .eq('key', 'instance_name')
+      .eq('scope', 'global')
+      .single()
+
+    const instanceName = instanceNameSetting?.value
+    if (instanceName && instanceName !== '"Zocalo Instance"' && instanceName !== 'Zocalo Instance') {
+      return true
+    }
+
+    // Check user count (if more than 1 user exists, setup is likely complete)
+    const { count: userCount, error: countError } = await supabase
+      .from('profiles')
+      .select('*', { count: 'exact', head: true })
+
+    if (countError) {
+      console.error('Error checking user count:', countError)
+      return false
+    }
+
+    return (userCount || 0) > 1
+
+  } catch (error) {
+    console.error('Error checking setup completion:', error)
+    return false
+  }
 } 

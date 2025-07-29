@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase/client'
 import { getGlobalSettings } from '@/lib/supabase/settings'
+import { checkCurrentUserProfileCompletion, shouldRedirectToProfileCompletion } from '@/lib/profile-utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -71,6 +72,19 @@ export default function LoginPage() {
       }
 
       if (data.user) {
+        // Check if user needs to complete their profile
+        try {
+          const profileStatus = await checkCurrentUserProfileCompletion()
+          
+          if (shouldRedirectToProfileCompletion(profileStatus)) {
+            router.push('/auth/complete-profile')
+            return
+          }
+        } catch (err) {
+          console.error('Failed to check profile completion:', err)
+          // Continue to dashboard if profile check fails
+        }
+
         // Redirect to dashboard or intended destination
         const redirectTo = searchParams.get('redirectTo') || '/dashboard'
         router.push(redirectTo)
@@ -84,19 +98,26 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="space-y-1">
-            <p className="text-sm text-gray-600">Sign in to</p>
-            <CardTitle className="text-2xl font-bold">{instanceName}</CardTitle>
-            <p className="text-lg text-gray-500">Zocalo</p>
+      <Card className="w-full max-w-md shadow-xl border-0 bg-white">
+        <CardHeader className="text-center space-y-6 pb-8">
+          {/* Orange Zocalo Logo */}
+          <div className="mx-auto">
+            <div className="text-4xl font-bold text-orange-500">
+              zocalo
+            </div>
           </div>
-          <CardDescription>
-            Enter your email and password to access your account
-          </CardDescription>
+          
+          <div className="space-y-2">
+            <CardTitle className="text-3xl font-bold text-gray-900">
+              Sign in to {instanceName}
+            </CardTitle>
+            <CardDescription className="text-gray-600 text-lg">
+              Enter your email and password to access your account
+            </CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <Label htmlFor="email">Email address</Label>
               <Input
@@ -107,6 +128,7 @@ export default function LoginPage() {
                 placeholder="Enter your email"
                 required
                 autoComplete="email"
+                className="rounded-lg border-gray-200 focus:border-orange-500 focus:ring-orange-500"
               />
             </div>
 
@@ -120,18 +142,19 @@ export default function LoginPage() {
                 placeholder="Enter your password"
                 required
                 autoComplete="current-password"
+                className="rounded-lg border-gray-200 focus:border-orange-500 focus:ring-orange-500"
               />
             </div>
 
             {error && (
-              <Alert variant="destructive">
+              <Alert variant="destructive" className="border-red-200 bg-red-50 text-red-800 rounded-lg">
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
 
             <Button
               type="submit"
-              className="w-full"
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-full py-3 font-semibold transition-all duration-200 shadow-md hover:shadow-lg"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -149,7 +172,7 @@ export default function LoginPage() {
             <div className="text-center">
               <Link
                 href="/auth/recover"
-                className="text-sm text-blue-600 hover:text-blue-500 underline"
+                className="text-sm text-orange-600 hover:text-orange-500 underline"
               >
                 Forgot your password?
               </Link>
@@ -161,7 +184,7 @@ export default function LoginPage() {
                   Don't have an account?{' '}
                   <Link
                     href="/auth/signup"
-                    className="text-blue-600 hover:text-blue-500 underline"
+                    className="text-orange-600 hover:text-orange-500 underline"
                   >
                     Sign up
                   </Link>
@@ -171,7 +194,7 @@ export default function LoginPage() {
                   Need access?{' '}
                   <Link
                     href="/auth/request-invite"
-                    className="text-blue-600 hover:text-blue-500 underline"
+                    className="text-orange-600 hover:text-orange-500 underline"
                   >
                     Request an invite
                   </Link>

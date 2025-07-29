@@ -1,11 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
-import { getGlobalSettings } from "@/lib/supabase/settings";
+import { getGlobalSettings, isSetupCompleted } from "@/lib/supabase/settings";
 
 export default async function Home() {
   let settings;
+  let setupComplete = false;
+  
   try {
     settings = await getGlobalSettings();
+    setupComplete = await isSetupCompleted();
   } catch (error) {
     // If settings can't be fetched, assume setup not completed
     settings = {
@@ -17,11 +20,18 @@ export default async function Home() {
     };
   }
 
-  const { instanceName, allowPublicSignup, setupCompleted } = settings;
+  const { instanceName, allowPublicSignup } = settings;
 
   return (
     <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
+        
+        {/* Orange Zocalo Logo */}
+        <div className="mx-auto sm:mx-0">
+          <div className="text-6xl font-bold text-orange-500 mb-8">
+            zocalo
+          </div>
+        </div>
         
         <div className="text-center sm:text-left">
           <h1 className="text-5xl font-bold">Welcome to {instanceName}</h1>
@@ -37,25 +47,25 @@ export default async function Home() {
         </div>
 
         <div className="flex gap-4 items-center flex-col sm:flex-row">
-          {!setupCompleted ? (
+          {!setupComplete ? (
             <Link
-              className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
+              className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-orange-500 text-white gap-2 hover:bg-orange-600 font-semibold text-sm sm:text-base h-12 px-6 shadow-md hover:shadow-lg"
               href="/setup"
             >
-              Start now
+              Start Setup
             </Link>
           ) : (
             <>
               <Link
-                className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-                href="/login"
+                className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-orange-500 text-white gap-2 hover:bg-orange-600 font-semibold text-sm sm:text-base h-12 px-6 shadow-md hover:shadow-lg"
+                href="/auth/login"
               >
-                Login
+                Sign In
               </Link>
               {allowPublicSignup && (
                 <Link
-                  className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto"
-                  href="/signup"
+                  className="rounded-full border border-solid border-orange-300 text-orange-600 transition-colors flex items-center justify-center hover:bg-orange-50 hover:border-orange-400 font-medium text-sm sm:text-base h-12 px-6"
+                  href="/auth/signup"
                 >
                   Sign Up
                 </Link>
@@ -63,19 +73,19 @@ export default async function Home() {
             </>
           )}
           <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-12 px-6"
+            href="https://we-free.org"
             target="_blank"
             rel="noopener noreferrer"
           >
-            Read our blog
+            Learn More
           </a>
         </div>
       </main>
       <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
         <a
           className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+          href="https://we-free.org/docs"
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -86,11 +96,11 @@ export default async function Home() {
             width={16}
             height={16}
           />
-          Learn
+          Documentation
         </a>
         <a
           className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+          href="https://github.com/We-free/zocalo"
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -101,11 +111,11 @@ export default async function Home() {
             width={16}
             height={16}
           />
-          Examples
+          GitHub
         </a>
         <a
           className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+          href="https://we-free.org"
           target="_blank"
           rel="noopener noreferrer"
         >

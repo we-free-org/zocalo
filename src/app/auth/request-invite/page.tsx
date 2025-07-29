@@ -119,16 +119,27 @@ export default function RequestInvitePage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Request Access</CardTitle>
-          <CardDescription>
-            Request an invitation to join {settings.instanceName}
-          </CardDescription>
+      <Card className="w-full max-w-md shadow-xl border-0 bg-white">
+        <CardHeader className="text-center space-y-6 pb-8">
+          {/* Orange Zocalo Logo */}
+          <div className="mx-auto">
+            <div className="text-4xl font-bold text-orange-500">
+              zocalo
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <CardTitle className="text-3xl font-bold text-gray-900">
+              Request Access
+            </CardTitle>
+            <CardDescription className="text-gray-600 text-lg">
+              Request an invitation to join {settings.instanceName}
+            </CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-2">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="firstName">First name</Label>
                 <Input
@@ -139,6 +150,7 @@ export default function RequestInvitePage() {
                   placeholder="First name"
                   required
                   autoComplete="given-name"
+                  className="rounded-lg border-gray-200 focus:border-orange-500 focus:ring-orange-500"
                 />
               </div>
               <div>
@@ -151,6 +163,7 @@ export default function RequestInvitePage() {
                   placeholder="Last name"
                   required
                   autoComplete="family-name"
+                  className="rounded-lg border-gray-200 focus:border-orange-500 focus:ring-orange-500"
                 />
               </div>
             </div>
@@ -165,6 +178,7 @@ export default function RequestInvitePage() {
                 placeholder="Enter your email"
                 required
                 autoComplete="email"
+                className="rounded-lg border-gray-200 focus:border-orange-500 focus:ring-orange-500"
               />
             </div>
 
@@ -176,7 +190,7 @@ export default function RequestInvitePage() {
                 onChange={handleInputChange('message')}
                 placeholder="Tell us why you'd like to join..."
                 rows={4}
-                className="resize-none"
+                className="resize-none rounded-lg border-gray-200 focus:border-orange-500 focus:ring-orange-500"
               />
               <p className="text-xs text-gray-500 mt-1">
                 Let us know a bit about yourself or why you'd like to join our community
@@ -184,20 +198,20 @@ export default function RequestInvitePage() {
             </div>
 
             {error && (
-              <Alert variant="destructive">
+              <Alert variant="destructive" className="border-red-200 bg-red-50 text-red-800 rounded-lg">
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
 
             {success && (
-              <Alert>
+              <Alert className="border-green-200 bg-green-50 text-green-800 rounded-lg">
                 <AlertDescription>{success}</AlertDescription>
               </Alert>
             )}
 
             <Button
               type="submit"
-              className="w-full"
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-full py-3 font-semibold transition-all duration-200 shadow-md hover:shadow-lg"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -215,7 +229,7 @@ export default function RequestInvitePage() {
             Already have an account?{' '}
             <Link
               href="/auth/login"
-              className="text-blue-600 hover:text-blue-500 underline"
+              className="text-orange-600 hover:text-orange-500 underline"
             >
               Sign in
             </Link>
