@@ -20,7 +20,7 @@ export default function CompleteProfilePage() {
   const [pageLoading, setPageLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<{ id: string; email?: string } | null>(null)
   const [isExistingUser, setIsExistingUser] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [deleteConfirmEmail, setDeleteConfirmEmail] = useState('')
@@ -180,8 +180,8 @@ export default function CompleteProfilePage() {
         }, 2000)
       }
 
-    } catch (err: any) {
-      setError(err.message || 'Failed to update profile')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to update profile')
     } finally {
       setIsLoading(false)
     }
@@ -222,8 +222,8 @@ export default function CompleteProfilePage() {
       await supabase.auth.signOut()
       router.push('/auth/login?message=Account deleted successfully')
       
-    } catch (err: any) {
-      setError(err.message || 'Failed to delete account')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to delete account')
     } finally {
       setIsLoading(false)
       setShowDeleteDialog(false)

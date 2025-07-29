@@ -28,7 +28,7 @@ export function WeekView({ events, currentWeek, onEventSelect }: WeekViewProps) 
   // Get events for a specific date
   const getEventsForDate = (date: Date) => {
     return events.filter(event => {
-      const eventDate = new Date(event.event_start)
+      const eventDate = new Date(event.parsedContent?.event_start || event.created_at)
       return eventDate.toDateString() === date.toDateString()
     })
   }
@@ -79,7 +79,7 @@ export function WeekView({ events, currentWeek, onEventSelect }: WeekViewProps) 
                   <div key={hour} className="h-12 border-b relative">
                     {/* Events for this hour */}
                     {getEventsForDate(day)
-                      .filter(event => new Date(event.event_start).getHours() === hour)
+                      .filter(event => new Date(event.parsedContent?.event_start || event.created_at).getHours() === hour)
                       .map(event => (
                         <div
                           key={event.id}
@@ -87,7 +87,7 @@ export function WeekView({ events, currentWeek, onEventSelect }: WeekViewProps) 
                           className="absolute left-1 right-1 top-1 bg-purple-100 border border-purple-200 rounded p-1 cursor-pointer hover:bg-purple-200 z-10"
                         >
                           <div className="text-xs font-medium truncate">{event.title}</div>
-                          <div className="text-xs text-purple-600">{formatEventTime(event.event_start)}</div>
+                          <div className="text-xs text-purple-600">{formatEventTime(event.parsedContent?.event_start || event.created_at)}</div>
                         </div>
                       ))}
                   </div>

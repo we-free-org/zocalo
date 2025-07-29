@@ -98,8 +98,8 @@ export default function RequestInvitePage() {
         lastName: '',
         message: ''
       })
-    } catch (err: any) {
-      setError(err.message || 'Failed to submit invite request')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to submit invite request')
     } finally {
       setIsLoading(false)
     }
@@ -193,7 +193,7 @@ export default function RequestInvitePage() {
                 className="resize-none rounded-lg border-gray-200 focus:border-orange-500 focus:ring-orange-500"
               />
               <p className="text-xs text-gray-500 mt-1">
-                Let us know a bit about yourself or why you'd like to join our community
+                Let us know a bit about yourself or why you&apos;d like to join our community
               </p>
             </div>
 

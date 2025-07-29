@@ -462,8 +462,8 @@ export const MemberContent = observer(({ member, onMemberUpdate, onMemberDeleted
       // Trigger member list refresh
       onMemberDeleted?.()
 
-    } catch (err: any) {
-      setDeleteError(err.message || 'Failed to delete user')
+    } catch (err: unknown) {
+      setDeleteError(err instanceof Error ? err.message : 'Failed to delete user')
     } finally {
       setIsDeleting(false)
     }
@@ -572,7 +572,7 @@ export const MemberContent = observer(({ member, onMemberUpdate, onMemberDeleted
               <span>Global Role</span>
             </CardTitle>
             <CardDescription>
-              Set the member's global role which determines their base permissions across the platform.
+              Set the member&apos;s global role which determines their base permissions across the platform.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -630,7 +630,7 @@ export const MemberContent = observer(({ member, onMemberUpdate, onMemberDeleted
                   <div className="mb-4">
                     <h4 className="font-medium text-red-800 mb-2">Delete User Account</h4>
                     <p className="text-sm text-red-700">
-                      This will permanently delete <strong>{member.first_name ? `${member.first_name} ${member.last_name}` : member.email}</strong>'s 
+                      This will permanently delete <strong>{member.first_name ? `${member.first_name} ${member.last_name}` : member.email}</strong>&apos;s 
                       account, including their profile, roles, and all associated data.
                     </p>
                   </div>
@@ -646,7 +646,7 @@ export const MemberContent = observer(({ member, onMemberUpdate, onMemberDeleted
                       <DialogHeader>
                         <DialogTitle>Delete User Account</DialogTitle>
                         <DialogDescription>
-                          This action will permanently delete {member.first_name || member.email}'s account 
+                          This action will permanently delete {member.first_name || member.email}&apos;s account 
                           and all associated data. This action cannot be undone.
                         </DialogDescription>
                       </DialogHeader>
@@ -658,7 +658,7 @@ export const MemberContent = observer(({ member, onMemberUpdate, onMemberDeleted
                         )}
                         <div>
                           <Label htmlFor="deleteConfirm">
-                            Type the user's email address to confirm: <strong>{member.auth_email || member.email}</strong>
+                            Type the user&apos;s email address to confirm: <strong>{member.auth_email || member.email}</strong>
                           </Label>
                           <Input
                             id="deleteConfirm"

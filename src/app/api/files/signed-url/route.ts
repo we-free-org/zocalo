@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase/admin'
+import { supabaseAdmin } from '@/lib/supabase/admin'
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     const token = authHeader.substring(7)
     
     // Verify the user with Supabase
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
     
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     const spaceId = filePath.split('/')[0]
     
     // Check if user has access to this space
-    const { data: accessCheck, error: accessError } = await supabase
+    const { data: accessCheck, error: accessError } = await supabaseAdmin
       .from('space_authorized_users')
       .select('id')
       .eq('space_id', spaceId)
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate signed URL (valid for 1 hour)
-    const { data: signedUrlData, error: urlError } = await supabase.storage
+    const { data: signedUrlData, error: urlError } = await supabaseAdmin.storage
       .from('files')
       .createSignedUrl(filePath, 3600) // 1 hour
 

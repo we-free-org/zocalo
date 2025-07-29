@@ -89,8 +89,8 @@ export default function LoginPage() {
         const redirectTo = searchParams.get('redirectTo') || '/dashboard'
         router.push(redirectTo)
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to sign in')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to sign in')
     } finally {
       setIsLoading(false)
     }
@@ -181,7 +181,7 @@ export default function LoginPage() {
             <div className="text-center text-sm text-gray-600">
               {allowPublicSignup ? (
                 <span>
-                  Don't have an account?{' '}
+                  Don&apos;t have an account?{' '}
                   <Link
                     href="/auth/signup"
                     className="text-orange-600 hover:text-orange-500 underline"

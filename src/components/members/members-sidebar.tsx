@@ -265,7 +265,7 @@ function InviteRequestItem({ invite, onApprove, onReject }: {
           </p>
           {invite.message && (
             <p className="text-xs text-muted-foreground mt-1 truncate">
-              "{invite.message}"
+              &quot;{invite.message}&quot;
             </p>
           )}
         </div>

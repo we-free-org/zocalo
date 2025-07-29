@@ -1,11 +1,7 @@
-export interface Event {
-  id: string
-  title: string
-  summary?: string
-  event_start: string
-  event_end?: string
-  event_location?: string
-  event_link?: string
-  metadata?: any
-  created_at: string
+import { Entity, EventEntityData } from '@/lib/entities'
+
+// Event entity with parsed content
+export interface Event extends Entity {
+  type: 'event'
+  parsedContent: EventEntityData
 } 

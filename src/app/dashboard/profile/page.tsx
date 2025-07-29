@@ -105,8 +105,8 @@ const ProfileContent = observer(() => {
         confirmNewPassword: ''
       }))
 
-    } catch (err: any) {
-      setError(err.message || 'Failed to update profile')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to update profile')
     } finally {
       setIsLoading(false)
     }
@@ -147,8 +147,8 @@ const ProfileContent = observer(() => {
       await supabase.auth.signOut()
       router.push('/auth/login?message=Account deleted successfully')
       
-    } catch (err: any) {
-      setError(err.message || 'Failed to delete account')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to delete account')
     } finally {
       setIsLoading(false)
       setShowDeleteDialog(false)

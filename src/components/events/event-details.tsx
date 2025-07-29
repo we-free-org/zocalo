@@ -21,6 +21,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { supabase } from '@/lib/supabase/client'
 import { useSpaceStore, useUserStore } from '@/stores'
 import { Event } from './types'
+import { entityService } from '@/lib/entities'
+import { Comments } from '@/components/comments'
 
 interface EventDetailsProps {
   event: Event | null
@@ -30,9 +32,7 @@ interface EventDetailsProps {
 export function EventDetails({ event, onEventUpdate }: EventDetailsProps) {
   const spaceStore = useSpaceStore()
   const userStore = useUserStore()
-  const [comments, setComments] = useState<any[]>([])
-  const [newComment, setNewComment] = useState('')
-  const [isLoadingComments, setIsLoadingComments] = useState(false)
+
   const [isEditing, setIsEditing] = useState(false)
   const [editForm, setEditForm] = useState({
     title: '',
@@ -48,8 +48,8 @@ export function EventDetails({ event, onEventUpdate }: EventDetailsProps) {
   // Initialize edit form when event changes
   useEffect(() => {
     if (event && isEditing) {
-      const startDate = new Date(event.event_start)
-      const endDate = event.event_end ? new Date(event.event_end) : startDate
+      const startDate = new Date(event.parsedContent?.event_start || event.created_at)
+      const endDate = event.parsedContent?.event_end ? new Date(event.parsedContent.event_end) : startDate
       
       setEditForm({
         title: event.title || '',
@@ -58,100 +58,15 @@ export function EventDetails({ event, onEventUpdate }: EventDetailsProps) {
         start_time: startDate.toTimeString().slice(0, 5),
         end_date: endDate.toISOString().split('T')[0],
         end_time: endDate.toTimeString().slice(0, 5),
-        event_location: event.event_location || '',
-        event_link: event.event_link || ''
+        event_location: event.parsedContent?.event_location || '',
+        event_link: event.parsedContent?.event_link || ''
       })
     }
   }, [event, isEditing])
 
-  // Load comments for the selected event
-  useEffect(() => {
-    const loadComments = async () => {
-      if (!event?.id) {
-        setComments([])
-        return
-      }
-      
-      setIsLoadingComments(true)
-      try {
-        const { data, error } = await supabase
-          .from('entities')
-          .select('id, content, created_at, created_by')
-          .eq('type', 'comment')
-          .eq('parent_id', event.id)
-          .eq('status', 'approved')
-          .order('created_at', { ascending: true })
 
-        if (error) {
-          console.error('Failed to load comments:', error)
-        } else if (data && data.length > 0) {
-          // Fetch profiles for all comment authors
-          const userIds = [...new Set(data.map(comment => comment.created_by))]
-          const { data: profilesData } = await supabase
-            .from('profiles')
-            .select('id, first_name, last_name, avatar_url')
-            .in('id', userIds)
 
-          // Map profiles to comments
-          const commentsWithProfiles = data.map(comment => ({
-            ...comment,
-            profiles: profilesData?.find(profile => profile.id === comment.created_by) || null
-          }))
-          
-          setComments(commentsWithProfiles)
-        } else {
-          setComments([])
-        }
-      } catch (error) {
-        console.error('Exception loading comments:', error)
-      } finally {
-        setIsLoadingComments(false)
-      }
-    }
 
-    loadComments()
-  }, [event?.id])
-
-  const handleAddComment = async () => {
-    if (!newComment.trim() || !event?.id || !userStore.user?.id) return
-
-    try {
-      const { data, error } = await supabase
-        .from('entities')
-        .insert({
-          type: 'comment',
-          parent_id: event.id,
-          space_id: spaceStore.currentSpaceId,
-          title: newComment.trim().substring(0, 100) + (newComment.trim().length > 100 ? '...' : ''),
-          content: newComment.trim(),
-          status: 'approved',
-          created_by: userStore.user.id
-        })
-        .select('id, content, created_at, created_by')
-
-      if (error) {
-        console.error('Failed to add comment:', error)
-      } else if (data) {
-        // Fetch the user profile separately to avoid complex join issues
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('id, first_name, last_name, avatar_url')
-          .eq('id', userStore.user.id)
-          .single()
-
-        // Add the comment with profile data
-        const commentWithProfile = {
-          ...data[0],
-          profiles: profileData
-        }
-        
-        setComments(prev => [...prev, commentWithProfile])
-        setNewComment('')
-      }
-    } catch (error) {
-      console.error('Exception adding comment:', error)
-    }
-  }
 
   const handleEditEvent = async () => {
     if (!event?.id || !userStore.user?.id) return
@@ -283,12 +198,12 @@ export function EventDetails({ event, onEventUpdate }: EventDetailsProps) {
               <span className="text-sm font-medium text-purple-600">
                 {spaceStore.currentSpaceName} Event
               </span>
-              {isEventToday(event.event_start) && (
+              {isEventToday(event.parsedContent?.event_start || event.created_at) && (
                 <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs font-medium rounded-full">
                   Today
                 </span>
               )}
-              {isEventUpcoming(event.event_start) && !isEventToday(event.event_start) && (
+              {isEventUpcoming(event.parsedContent?.event_start || event.created_at) && !isEventToday(event.parsedContent?.event_start || event.created_at) && (
                 <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
                   Upcoming
                 </span>
@@ -453,16 +368,16 @@ export function EventDetails({ event, onEventUpdate }: EventDetailsProps) {
                   <h3 className="font-medium text-foreground mb-1 text-sm">Date & Time</h3>
                   <div className="space-y-1">
                     <div className="text-xs text-foreground">
-                      <span className="font-medium">Starts:</span> {formatEventDateTime(event.event_start)}
+                      <span className="font-medium">Starts:</span> {formatEventDateTime(event.parsedContent?.event_start || event.created_at)}
                     </div>
-                    {event.event_end && (
+                    {event.parsedContent?.event_end && (
                       <div className="text-xs text-foreground">
-                        <span className="font-medium">Ends:</span> {formatEventDateTime(event.event_end)}
+                        <span className="font-medium">Ends:</span> {formatEventDateTime(event.parsedContent.event_end)}
                       </div>
                     )}
-                    {event.event_end && (
+                    {event.parsedContent?.event_end && (
                       <div className="text-xs text-purple-600 font-medium">
-                        Duration: {calculateDuration(event.event_start, event.event_end)}
+                        Duration: {calculateDuration(event.parsedContent?.event_start || event.created_at, event.parsedContent.event_end)}
                       </div>
                     )}
                   </div>
@@ -504,79 +419,7 @@ export function EventDetails({ event, onEventUpdate }: EventDetailsProps) {
             )}
 
             {/* Comments Section */}
-            <div className="bg-card rounded-lg border">
-              <div className="border-b p-3">
-                <div className="flex items-center space-x-2">
-                  <MessageCircle className="h-4 w-4 text-purple-600" />
-                  <h3 className="font-medium text-foreground text-sm">Comments</h3>
-                  <span className="text-xs text-muted-foreground">({comments.length})</span>
-                </div>
-              </div>
-              
-              <div className="p-3 space-y-3">
-                {/* Comments List */}
-                {isLoadingComments ? (
-                  <div className="text-xs text-muted-foreground text-center py-2">Loading comments...</div>
-                ) : comments.length === 0 ? (
-                  <div className="text-xs text-muted-foreground text-center py-2">No comments yet</div>
-                ) : (
-                  <div className="space-y-2 max-h-32 overflow-y-auto">
-                    {comments.map((comment) => (
-                      <div key={comment.id} className="text-xs">
-                        <div className="flex items-start space-x-2">
-                          <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                            <span className="text-xs font-medium text-purple-600">
-                              {comment.profiles?.first_name?.[0] || 'U'}
-                            </span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center space-x-1 mb-1">
-                              <span className="font-medium text-foreground">
-                                {comment.profiles?.first_name} {comment.profiles?.last_name}
-                              </span>
-                              <span className="text-muted-foreground">
-                                {new Date(comment.created_at).toLocaleDateString('en-US', {
-                                  month: 'short',
-                                  day: 'numeric',
-                                  hour: 'numeric',
-                                  minute: '2-digit'
-                                })}
-                              </span>
-                            </div>
-                            <p className="text-foreground">{comment.content}</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                
-                {/* Add Comment */}
-                <div className="flex space-x-2">
-                  <Textarea
-                    placeholder="Add a comment..."
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    className="flex-1 min-h-[60px] text-xs"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault()
-                        handleAddComment()
-                      }
-                    }}
-                  />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleAddComment}
-                    disabled={!newComment.trim()}
-                    className="self-end"
-                  >
-                    <Send className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
-            </div>
+            <Comments parentId={event.id} parentType="event" className="bg-card rounded-lg border" />
 
             {/* Action Buttons */}
             <div className="flex space-x-2 pt-2">

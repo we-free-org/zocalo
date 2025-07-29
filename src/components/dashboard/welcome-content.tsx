@@ -2,20 +2,16 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { observer } from 'mobx-react-lite'
 import { Plus, Users, Hash, Calendar, FileText, Vote, MessageCircle, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { getGlobalSettings } from '@/lib/supabase/settings'
+import { useStore } from '@/stores'
+import { cn } from '@/lib/utils'
 
-interface WelcomeContentProps {
-  currentSpace?: string
-  onSectionChange?: (section: string) => void
-}
-
-export function WelcomeContent({ 
-  currentSpace = 'General', 
-  onSectionChange = () => {} 
-}: WelcomeContentProps) {
+export const WelcomeContent = observer(() => {
+  const { spaceStore } = useStore()
   const [instanceName, setInstanceName] = useState('Zocalo Instance')
   const router = useRouter()
 
@@ -83,8 +79,6 @@ export function WelcomeContent({
   ]
 
   const handleSectionNavigation = (section: string) => {
-    onSectionChange(section) // Still call the parent handler for any state management
-    
     // Navigate to the appropriate route
     if (section === 'home') {
       router.push('/dashboard')
@@ -102,7 +96,7 @@ export function WelcomeContent({
             Welcome to {instanceName}
           </h1>
           <p className="text-xl text-muted-foreground mb-2">
-            You're currently in the <span className="font-semibold text-[rgb(255,113,67)]">{currentSpace}</span> space
+            You&apos;re currently in the <span className="font-semibold text-[rgb(255,113,67)]">{spaceStore.currentSpaceName}</span> space
           </p>
           <p className="text-lg text-muted-foreground">
             Start building your community and collaborating with your team
@@ -187,8 +181,4 @@ export function WelcomeContent({
       </div>
     </div>
   )
-}
-
-function cn(...classes: string[]) {
-  return classes.filter(Boolean).join(' ')
-} 
+}) 

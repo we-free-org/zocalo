@@ -1,24 +1,15 @@
-interface BaseEntity {
-  id: string
-  title: string
-  summary?: string
-  parent_id?: string | null // Allow both null and undefined to match database
-  metadata?: any
-  created_at: string
-  created_by: string
+import { Entity, FileEntityData, FolderEntityData } from '@/lib/entities'
+
+// File entity with parsed content
+export interface File extends Entity {
+  type: 'file'
+  parsedContent: FileEntityData
 }
 
-export interface File extends BaseEntity {
-  type?: 'file'
-  content?: string
-  file_url?: string
-  file_name?: string
-  file_type?: string
-  file_size?: number
-}
-
-export interface Folder extends BaseEntity {
-  type?: 'folder'
+// Folder entity with parsed content
+export interface Folder extends Entity {
+  type: 'folder'
+  parsedContent: FolderEntityData
 }
 
 export type FileTreeItem = File | Folder
@@ -27,4 +18,14 @@ export interface FileTreeNode {
   item: FileTreeItem
   children: FileTreeNode[]
   isExpanded: boolean
+}
+
+// Helper function to check if an item is a file
+export function isFile(item: FileTreeItem): item is File {
+  return item.type === 'file'
+}
+
+// Helper function to check if an item is a folder
+export function isFolder(item: FileTreeItem): item is Folder {
+  return item.type === 'folder'
 } 

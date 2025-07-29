@@ -19,6 +19,7 @@ import { supabase } from '@/lib/supabase/client'
 import { useSpaceStore } from '@/stores'
 import { cn } from '@/lib/utils'
 import { Event } from './types'
+import { entityService, EventEntityData } from '@/lib/entities'
 
 interface EventsSidebarProps {
   selectedEvent: Event | null
@@ -265,19 +266,22 @@ function EventsSidebarComponent({ selectedEvent, onEventSelect }: EventsSidebarP
         return
       }
 
-      const { data, error } = await supabase
-        .from('entities')
-        .select('id, title, summary, event_start, event_end, event_location, event_link, metadata, created_at')
-        .eq('type', 'event')
-        .eq('space_id', spaceStore.currentSpaceId)
-        .eq('status', 'approved')
-        .order('event_start', { ascending: true })
+      const eventEntities = await entityService.queryEntitiesWithContent<EventEntityData>({
+        space_id: spaceStore.currentSpaceId,
+        type: 'event',
+        status: 'approved',
+        order_by: 'created_at',
+        order_direction: 'asc'
+      })
 
-      if (error) {
-        console.error('Failed to load events:', error)
-      } else {
-        setEvents(data || [])
-      }
+      // Sort by event start date from parsed content
+      const sortedEvents = eventEntities.sort((a, b) => {
+        const aStart = new Date(a.parsedContent?.event_start || a.created_at)
+        const bStart = new Date(b.parsedContent?.event_start || b.created_at)
+        return aStart.getTime() - bStart.getTime()
+      })
+
+      setEvents(sortedEvents as Event[])
     } catch (error) {
       console.error('Failed to load events:', error)
     } finally {
@@ -321,26 +325,21 @@ function EventsSidebarComponent({ selectedEvent, onEventSelect }: EventsSidebarP
         return
       }
 
-      const eventData = {
+      const eventEntity = await entityService.createEntity({
         space_id: spaceStore.currentSpace.id,
         type: 'event',
         title: newEvent.title.trim(),
         summary: newEvent.summary.trim() || null,
-        event_start: eventStart,
-        event_end: eventEnd,
-        event_location: newEvent.event_location.trim() || null,
-        event_link: newEvent.event_link.trim() || null,
+        content: {
+          event_start: eventStart,
+          event_end: eventEnd,
+          event_location: newEvent.event_location.trim() || null,
+          event_link: newEvent.event_link.trim() || null
+        },
         created_by: user.id
-      }
+      })
 
-      const { data, error } = await supabase
-        .from('entities')
-        .insert(eventData)
-        .select()
-        .single()
-
-      if (error) {
-        console.error('Database error creating event:', error)
+      if (!eventEntity) {
         setCreateError('Failed to create event. Please try again.')
         return
       }
@@ -392,7 +391,7 @@ function EventsSidebarComponent({ selectedEvent, onEventSelect }: EventsSidebarP
 
   const getUpcomingEvents = () => {
     const now = new Date()
-    return events.filter(event => new Date(event.event_start) >= now)
+    return events.filter(event => new Date(event.parsedContent?.event_start || event.created_at) >= now)
   }
 
   if (isLoading) {
@@ -606,11 +605,11 @@ function EventsSidebarComponent({ selectedEvent, onEventSelect }: EventsSidebarP
             >
               <div className="font-medium text-sm mb-1">{event.title}</div>
               <div className="text-xs text-purple-600 font-medium mb-1">
-                {formatEventTime(event.event_start)}
+                {formatEventTime(event.parsedContent?.event_start || event.created_at)}
               </div>
-              {event.event_location && (
+              {event.parsedContent?.event_location && (
                 <div className="text-xs text-muted-foreground">
-                  📍 {event.event_location}
+                  📍 {event.parsedContent.event_location}
                 </div>
               )}
             </div>

@@ -40,7 +40,7 @@ export function MonthView({ events, calendarMonth, onEventSelect }: MonthViewPro
   // Get events for a specific date
   const getEventsForDate = (date: Date) => {
     return events.filter(event => {
-      const eventDate = new Date(event.event_start)
+      const eventDate = new Date(event.parsedContent?.event_start || event.created_at)
       return eventDate.toDateString() === date.toDateString()
     })
   }
@@ -100,7 +100,7 @@ export function MonthView({ events, calendarMonth, onEventSelect }: MonthViewPro
                     <div className="w-2 h-2 bg-purple-500 rounded-full flex-shrink-0"></div>
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-medium truncate">{event.title}</div>
-                      <div className="text-xs text-muted-foreground">{formatEventTime(event.event_start)}</div>
+                      <div className="text-xs text-muted-foreground">{formatEventTime(event.parsedContent?.event_start || event.created_at)}</div>
                     </div>
                   </div>
                 ))}

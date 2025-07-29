@@ -7,6 +7,7 @@ import { useSpaceStore } from '@/stores'
 import { CalendarView } from './calendar-view'
 import { EventDetails } from './event-details'
 import { Event } from './types'
+import { entityService, EventEntityData } from '@/lib/entities'
 
 interface EventContentProps {
   event: Event | null
@@ -23,19 +24,22 @@ function EventContentComponent({ event, onEventUpdate }: EventContentProps) {
       if (!spaceStore.currentSpaceId) return
       
       try {
-        const { data, error } = await supabase
-          .from('entities')
-          .select('id, title, summary, event_start, event_end, event_location, event_link, metadata, created_at')
-          .eq('type', 'event')
-          .eq('space_id', spaceStore.currentSpaceId)
-          .eq('status', 'approved')
-          .order('event_start', { ascending: true })
+        const eventEntities = await entityService.queryEntitiesWithContent<EventEntityData>({
+          space_id: spaceStore.currentSpaceId,
+          type: 'event',
+          status: 'approved',
+          order_by: 'created_at',
+          order_direction: 'asc'
+        })
 
-        if (error) {
-          console.error('Failed to load events:', error)
-        } else {
-          setEvents(data || [])
-        }
+        // Sort by event start date from parsed content
+        const sortedEvents = eventEntities.sort((a, b) => {
+          const aStart = new Date(a.parsedContent?.event_start || a.created_at)
+          const bStart = new Date(b.parsedContent?.event_start || b.created_at)
+          return aStart.getTime() - bStart.getTime()
+        })
+
+        setEvents(sortedEvents as Event[])
       } catch (error) {
         console.error('Exception loading events:', error)
       }

@@ -25,7 +25,8 @@ import {
 import { supabase } from '@/lib/supabase/client'
 import { useSpaceStore, useUserStore } from '@/stores'
 import { cn } from '@/lib/utils'
-import { File, Folder as FolderType, FileTreeItem, FileTreeNode } from './types'
+import { File, Folder as FolderType, FileTreeItem, FileTreeNode, isFile } from './types'
+import { entityService, FileEntityData, FolderEntityData } from '@/lib/entities'
 
 interface FilesSidebarProps {
   selectedFile: File | null
@@ -78,7 +79,7 @@ function MoveItemSelector({ files, selectedItem, onMove, onCancel }: MoveItemSel
             <Folder className="h-4 w-4 text-orange-600 flex-shrink-0" />
             <span className="text-sm truncate">{folder.title}</span>
             {isDisabled && (
-              <span className="text-xs text-muted-foreground ml-auto">Can't move here</span>
+              <span className="text-xs text-muted-foreground ml-auto">Can&apos;t move here</span>
             )}
           </div>
           {children}
@@ -332,28 +333,15 @@ export const FilesSidebar = observer(({ selectedFile, onFileSelect }: FilesSideb
 
       setIsLoading(true)
       try {
-        const { data, error } = await supabase
-          .from('entities')
-          .select('id, type, title, summary, content, file_url, file_name, file_type, file_size, parent_id, metadata, created_at, created_by')
-          .eq('space_id', spaceStore.currentSpaceId)
-          .in('type', ['file', 'folder'])
-          .eq('status', 'approved')
-          .order('created_at', { ascending: true })
+        const entities = await entityService.queryEntitiesWithContent<FileEntityData | FolderEntityData>({
+          space_id: spaceStore.currentSpaceId,
+          type: ['file', 'folder'],
+          status: 'approved',
+          order_by: 'created_at',
+          order_direction: 'asc'
+        })
 
-        if (error) {
-          console.error('Failed to load files:', error)
-        } else {
-          // Ensure we have the type information for proper categorization
-          const processedData = (data || []).map(item => ({
-            ...item,
-            type: item.type, // Ensure type field is preserved
-            metadata: {
-              ...item.metadata,
-              entity_type: item.type
-            }
-          }))
-          setFiles(processedData)
-        }
+        setFiles(entities as FileTreeItem[])
       } catch (error) {
         console.error('Exception loading files:', error)
       } finally {
@@ -395,37 +383,44 @@ export const FilesSidebar = observer(({ selectedFile, onFileSelect }: FilesSideb
   }
 
   const handleCreateItem = async () => {
-    if (!newItem.title.trim() || !userStore.user?.id) return
+    if (!newItem.title.trim() || !userStore.user?.id || !spaceStore.currentSpaceId) return
 
     try {
-      const { data, error } = await supabase
-        .from('entities')
-        .insert({
-          type: createType,
+      let entity = null
+      
+      if (createType === 'file') {
+        entity = await entityService.createFile({
           space_id: spaceStore.currentSpaceId,
           title: newItem.title.trim(),
           summary: newItem.summary.trim() || null,
-          content: createType === 'file' ? (newItem.content.trim() || null) : null,
           parent_id: newItem.parent_id,
-          status: 'approved',
           created_by: userStore.user.id,
+          content: {
+            file_url: '', // Empty for text files
+            file_name: newItem.title.trim(),
+            file_type: 'text/plain',
+            file_size: newItem.content.length
+          },
           metadata: {
-            entity_type: createType
+            text_content: newItem.content.trim() || null
           }
         })
-        .select('id, type, title, summary, content, file_url, file_name, file_type, file_size, parent_id, metadata, created_at, created_by')
+      } else {
+        entity = await entityService.createFolder({
+          space_id: spaceStore.currentSpaceId,
+          title: newItem.title.trim(),
+          summary: newItem.summary.trim() || null,
+          parent_id: newItem.parent_id,
+          created_by: userStore.user.id
+        })
+      }
 
-      if (error) {
-        console.error('Failed to create item:', error)
-      } else if (data) {
-        const processedData = data.map(item => ({
-          ...item,
-          metadata: {
-            ...item.metadata,
-            entity_type: item.type
-          }
-        }))
-        setFiles(prev => [...prev, ...processedData])
+      if (entity) {
+        // Get the entity with parsed content
+        const entityWithContent = await entityService.getEntityWithContent(entity.id)
+        if (entityWithContent) {
+          setFiles(prev => [...prev, entityWithContent as FileTreeItem])
+        }
         setNewItem({ title: '', summary: '', content: '', parent_id: null })
         setIsCreateDialogOpen(false)
       }
@@ -436,7 +431,7 @@ export const FilesSidebar = observer(({ selectedFile, onFileSelect }: FilesSideb
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
-    if (!file || !userStore.user?.id) return
+    if (!file || !userStore.user?.id || !spaceStore.currentSpaceId) return
 
     setIsUploading(true)
     try {
@@ -454,40 +449,28 @@ export const FilesSidebar = observer(({ selectedFile, onFileSelect }: FilesSideb
         return
       }
 
-      // Store file path for signed URL generation
-      // Create entity record
-      const { data, error } = await supabase
-        .from('entities')
-        .insert({
-          type: 'file',
-          space_id: spaceStore.currentSpaceId,
-          title: file.name,
+      // Create entity record using the entity service
+      const entity = await entityService.createFile({
+        space_id: spaceStore.currentSpaceId,
+        title: file.name,
+        parent_id: null, // TODO: Allow selecting parent folder
+        created_by: userStore.user.id,
+        content: {
           file_url: `files/${filePath}`, // Store bucket path for reference
           file_name: file.name,
           file_type: file.type,
           file_size: file.size,
-          parent_id: null, // TODO: Allow selecting parent folder
-          status: 'approved',
-          created_by: userStore.user.id,
-          metadata: {
-            entity_type: 'file',
-            original_name: file.name,
-            upload_path: filePath // This is what we use for signed URLs
-          }
-        })
-        .select('id, type, title, summary, content, file_url, file_name, file_type, file_size, parent_id, metadata, created_at, created_by')
+          upload_path: filePath, // This is what we use for signed URLs
+          original_name: file.name
+        }
+      })
 
-      if (error) {
-        console.error('Failed to create file entity:', error)
-      } else if (data) {
-        const processedData = data.map(item => ({
-          ...item,
-          metadata: {
-            ...item.metadata,
-            entity_type: item.type
-          }
-        }))
-        setFiles(prev => [...prev, ...processedData])
+      if (entity) {
+        // Get the entity with parsed content
+        const entityWithContent = await entityService.getEntityWithContent(entity.id)
+        if (entityWithContent) {
+          setFiles(prev => [...prev, entityWithContent as FileTreeItem])
+        }
       }
     } catch (error) {
       console.error('Exception uploading file:', error)
@@ -539,18 +522,9 @@ export const FilesSidebar = observer(({ selectedFile, onFileSelect }: FilesSideb
     if (!userStore.user?.id) return
     
     try {
-      const { error } = await supabase
-        .from('entities')
-        .update({ 
-          status: 'deleted',
-          deleted_by: userStore.user.id,
-          deleted_at: new Date().toISOString()
-        })
-        .eq('id', item.id)
+      const success = await entityService.deleteEntity(item.id, userStore.user.id)
       
-      if (error) {
-        console.error('Failed to delete item:', error)
-      } else {
+      if (success) {
         setFiles(prev => prev.filter(f => f.id !== item.id))
         if (selectedFile?.id === item.id) {
           onFileSelect(null)
@@ -562,17 +536,15 @@ export const FilesSidebar = observer(({ selectedFile, onFileSelect }: FilesSideb
   }
 
   const handleRenameItem = async () => {
-    if (!selectedItem || !renameTitle.trim()) return
+    if (!selectedItem || !renameTitle.trim() || !userStore.user?.id) return
     
     try {
-      const { error } = await supabase
-        .from('entities')
-        .update({ title: renameTitle.trim() })
-        .eq('id', selectedItem.id)
+      const updatedEntity = await entityService.updateEntity(selectedItem.id, {
+        title: renameTitle.trim(),
+        edited_by: userStore.user.id
+      })
       
-      if (error) {
-        console.error('Failed to rename item:', error)
-      } else {
+      if (updatedEntity) {
         setFiles(prev => prev.map(f => 
           f.id === selectedItem.id ? { ...f, title: renameTitle.trim() } : f
         ))
@@ -586,18 +558,13 @@ export const FilesSidebar = observer(({ selectedFile, onFileSelect }: FilesSideb
   }
 
   const handleMoveItem = async (targetParentId: string | null) => {
-    if (!selectedItem) return
+    if (!selectedItem || !userStore.user?.id) return
     
     setIsMoveLoading(true)
     try {
-      const { error } = await supabase
-        .from('entities')
-        .update({ parent_id: targetParentId })
-        .eq('id', selectedItem.id)
+      const success = await entityService.moveEntity(selectedItem.id, targetParentId, userStore.user.id)
       
-      if (error) {
-        console.error('Failed to move item:', error)
-      } else {
+      if (success) {
         // Update local state
         setFiles(prev => prev.map(f => 
           f.id === selectedItem.id ? { ...f, parent_id: targetParentId } : f
@@ -614,7 +581,7 @@ export const FilesSidebar = observer(({ selectedFile, onFileSelect }: FilesSideb
 
   const handleFolderUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
-    if (!file || !userStore.user?.id || !uploadToFolder) return
+    if (!file || !userStore.user?.id || !uploadToFolder || !spaceStore.currentSpaceId) return
 
     setIsUploading(true)
     try {
@@ -631,39 +598,28 @@ export const FilesSidebar = observer(({ selectedFile, onFileSelect }: FilesSideb
         return
       }
 
-      const { data, error } = await supabase
-        .from('entities')
-        .insert({
-          type: 'file',
-          space_id: spaceStore.currentSpaceId,
-          title: file.name,
+      // Create entity record using the entity service
+      const entity = await entityService.createFile({
+        space_id: spaceStore.currentSpaceId,
+        title: file.name,
+        parent_id: uploadToFolder.id,
+        created_by: userStore.user.id,
+        content: {
           file_url: `files/${filePath}`, // Store bucket path for reference
           file_name: file.name,
           file_type: file.type,
           file_size: file.size,
-          parent_id: uploadToFolder.id,
-          status: 'approved',
-          created_by: userStore.user.id,
-          metadata: { 
-            entity_type: 'file', 
-            original_name: file.name, 
-            upload_path: filePath // This is what we use for signed URLs
-          }
-        })
-        .select('id, type, title, summary, content, file_url, file_name, file_type, file_size, parent_id, metadata, created_at, created_by')
+          upload_path: filePath, // This is what we use for signed URLs
+          original_name: file.name
+        }
+      })
 
-      if (error) {
-        console.error('Failed to create file entity:', error)
-      } else if (data) {
-        const processedData = data.map(item => ({
-          ...item,
-          type: item.type,
-          metadata: {
-            ...item.metadata,
-            entity_type: item.type
-          }
-        }))
-        setFiles(prev => [...prev, ...processedData])
+      if (entity) {
+        // Get the entity with parsed content
+        const entityWithContent = await entityService.getEntityWithContent(entity.id)
+        if (entityWithContent) {
+          setFiles(prev => [...prev, entityWithContent as FileTreeItem])
+        }
         setUploadToFolder(null)
       }
     } catch (error) {

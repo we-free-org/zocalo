@@ -39,14 +39,8 @@ function DashboardLayoutComponent({
     setCurrentSection(section)
   }
 
-  // Clone children and pass props if they need them
-  const enhancedChildren = isValidElement(children) 
-    ? cloneElement(children as any, { 
-        currentSpace: spaceStore.currentSpaceName, 
-        currentSection,
-        onSectionChange: handleSectionChange 
-      })
-    : children
+  // Modern components should use stores directly, no need to pass props
+  const enhancedChildren = children
 
   return (
     <div className="h-screen flex bg-background">

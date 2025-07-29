@@ -1,23 +1,71 @@
+'use client'
+
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { observer } from 'mobx-react-lite';
 import { getGlobalSettings, isSetupCompleted } from "@/lib/supabase/settings";
+import { useUserStore } from "@/stores";
+import { Loader2 } from 'lucide-react';
 
-export default async function Home() {
-  let settings;
-  let setupComplete = false;
-  
-  try {
-    settings = await getGlobalSettings();
-    setupComplete = await isSetupCompleted();
-  } catch (error) {
-    // If settings can't be fetched, assume setup not completed
-    settings = {
-      instanceName: 'Zocalo Instance',
-      instanceDomain: '',
-      allowPublicSignup: true,
-      requireEmailConfirmation: true,
-      setupCompleted: false
+const HomePageContent = observer(() => {
+  const router = useRouter();
+  const userStore = useUserStore();
+  const [settings, setSettings] = useState({
+    instanceName: 'Zocalo Instance',
+    instanceDomain: '',
+    allowPublicSignup: true,
+    requireEmailConfirmation: true,
+    setupCompleted: false
+  });
+  const [setupComplete, setSetupComplete] = useState(false);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+
+  // Check session and load settings on mount
+  useEffect(() => {
+    const initializePage = async () => {
+      // Check session first
+      await userStore.checkSession();
+      
+      // If user is authenticated, redirect to dashboard
+      if (userStore.isAuthenticated) {
+        router.push('/dashboard');
+        return;
+      }
+
+      // Load settings for non-authenticated users
+      try {
+        const globalSettings = await getGlobalSettings();
+        const setupCompleted = await isSetupCompleted();
+        setSettings(globalSettings);
+        setSetupComplete(setupCompleted);
+      } catch (error) {
+        // If settings can't be fetched, use defaults
+        console.error('Failed to load settings:', error);
+      } finally {
+        setIsLoadingSettings(false);
+      }
     };
+
+    initializePage();
+  }, [userStore, router]);
+
+  // Show loading while checking authentication and settings
+  if (userStore.isLoading || isLoadingSettings) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin text-orange-500 mx-auto" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is authenticated, don't render the page content (redirect is in progress)
+  if (userStore.isAuthenticated) {
+    return null;
   }
 
   const { instanceName, allowPublicSignup } = settings;
@@ -131,4 +179,8 @@ export default async function Home() {
       </footer>
     </div>
   );
+});
+
+export default function Home() {
+  return <HomePageContent />;
 }

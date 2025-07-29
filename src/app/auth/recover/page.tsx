@@ -83,8 +83,8 @@ export default function RecoverPage() {
       setSuccess(
         'Password reset instructions have been sent to your email address. Please check your inbox and follow the link to reset your password.'
       )
-    } catch (err: any) {
-      setError(err.message || 'Failed to send reset email')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to send reset email')
     } finally {
       setIsLoading(false)
     }
@@ -121,8 +121,8 @@ export default function RecoverPage() {
       setTimeout(() => {
         router.push('/dashboard')
       }, 2000)
-    } catch (err: any) {
-      setError(err.message || 'Failed to update password')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to update password')
     } finally {
       setIsLoading(false)
     }
