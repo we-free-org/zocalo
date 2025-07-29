@@ -76,13 +76,13 @@ function VoteDetails({ vote }: { vote: Vote }) {
             if (vote.parsedContent.vote_anonymous) {
               // For anonymous votes, check hashed user ID
               const userHash = generateUserIdHash(userStore.user.id, vote.id)
-              if (content.user_id_hash === userHash) {
+              if ((content as Record<string, unknown>).user_id_hash === userHash) {
                 userHasVoted = true
                 userSubmissions.push(submission)
               }
             } else {
               // For non-anonymous votes, check created_by
-              if (submission.created_by === userStore.user.id) {
+              if ((submission as Record<string, unknown>).created_by === userStore.user.id) {
                 userHasVoted = true
                 userSubmissions.push(submission)
               }
@@ -96,7 +96,7 @@ function VoteDetails({ vote }: { vote: Vote }) {
 
         // Set selected options based on user's previous votes
         if (userHasVoted) {
-          const userChoices = userSubmissions.map(s => s.parsedContent.choice_index).filter(c => c !== undefined)
+          const userChoices = userSubmissions.map(s => ((s as Record<string, unknown>).parsedContent as Record<string, unknown>).choice_index as number).filter(c => c !== undefined)
           setSelectedOptions(userChoices)
         }
       } catch (error) {
@@ -291,7 +291,7 @@ function VoteDetails({ vote }: { vote: Vote }) {
               const voteCount = voteResults[index] || 0
               const percentage = getVotePercentage(index)
               const isSelected = selectedOptions.includes(index)
-              const isUserChoice = hasVoted && userVotes.some(v => v.parsedContent.choice_index === index)
+              const isUserChoice = hasVoted && userVotes.some(v => ((v as Record<string, unknown>).parsedContent as Record<string, unknown>).choice_index === index)
               
               return (
                 <div 

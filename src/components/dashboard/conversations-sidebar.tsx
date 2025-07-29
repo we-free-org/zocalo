@@ -118,7 +118,7 @@ export const ConversationsSidebar = observer(({ selectedConversation, onConversa
 
                   if (!currentUserError && currentUserParticipant && currentUserParticipant.length > 0) {
                     // Found existing conversation
-                    const conversationData = participant.conversations as Record<string, unknown>
+                    const conversationData = (participant.conversations as unknown) as Record<string, unknown>
                     const conversation = {
                       ...conversationData,
                       participant: user

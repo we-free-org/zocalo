@@ -386,32 +386,32 @@ export function EventDetails({ event, onEventUpdate }: EventDetailsProps) {
             </div>
 
             {/* Location */}
-            {event.event_location && (
+            {event.parsedContent?.event_location && (
               <div className="bg-card rounded-lg p-3 border">
                 <div className="flex items-start space-x-3">
                   <MapPin className="h-4 w-4 text-purple-600 mt-0.5" />
                   <div>
                     <h3 className="font-medium text-foreground mb-1 text-sm">Location</h3>
-                    <p className="text-xs text-foreground">{event.event_location}</p>
+                    <p className="text-xs text-foreground">{event.parsedContent?.event_location}</p>
                   </div>
                 </div>
               </div>
             )}
 
             {/* Link */}
-            {event.event_link && (
+            {event.parsedContent?.event_link && (
               <div className="bg-card rounded-lg p-3 border">
                 <div className="flex items-start space-x-3">
                   <LinkIcon className="h-4 w-4 text-purple-600 mt-0.5" />
                   <div>
                     <h3 className="font-medium text-foreground mb-1 text-sm">Link</h3>
                     <a 
-                      href={event.event_link}
+                      href={event.parsedContent?.event_link}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-xs text-purple-600 hover:text-purple-700 underline break-all"
                     >
-                      {event.event_link}
+                      {event.parsedContent?.event_link}
                     </a>
                   </div>
                 </div>

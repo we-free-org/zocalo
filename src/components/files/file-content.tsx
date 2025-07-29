@@ -69,7 +69,7 @@ function FileViewer({ file }: { file: File }) {
       if (file.title.endsWith('.md') || file.parsedContent?.file_type === 'text/markdown') {
         return (
           <div className="prose max-w-none">
-            <pre className="whitespace-pre-wrap font-sans text-sm">{file.metadata.text_content}</pre>
+            <pre className="whitespace-pre-wrap font-sans text-sm">{file.metadata.text_content as string}</pre>
           </div>
         )
       }
@@ -77,7 +77,7 @@ function FileViewer({ file }: { file: File }) {
       // Regular text
       return (
         <div className="font-mono text-sm">
-          <pre className="whitespace-pre-wrap">{file.metadata.text_content}</pre>
+          <pre className="whitespace-pre-wrap">{file.metadata.text_content as string}</pre>
         </div>
       )
     }
@@ -231,7 +231,7 @@ export const FileContent = observer(({ file, onFileUpdate }: FileContentProps) =
       }
     } else if (file.metadata?.text_content) {
       // For text content, create a blob and download
-              const blob = new Blob([file.metadata.text_content], { type: 'text/plain' })
+              const blob = new Blob([file.metadata.text_content as string], { type: 'text/plain' })
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url

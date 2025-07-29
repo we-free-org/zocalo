@@ -763,9 +763,9 @@ export const FilesSidebar = observer(({ selectedFile, onFileSelect }: FilesSideb
       <Dialog open={isRenameDialogOpen} onOpenChange={setIsRenameDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Rename {selectedItem?.metadata?.entity_type || 'Item'}</DialogTitle>
+            <DialogTitle>Rename {selectedItem?.metadata?.entity_type as string || 'Item'}</DialogTitle>
             <DialogDescription>
-              Enter a new name for this {selectedItem?.metadata?.entity_type || 'item'}.
+              Enter a new name for this {selectedItem?.metadata?.entity_type as string || 'item'}.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -796,7 +796,7 @@ export const FilesSidebar = observer(({ selectedFile, onFileSelect }: FilesSideb
             <DialogHeader>
               <DialogTitle>Move {selectedItem?.title}</DialogTitle>
               <DialogDescription>
-                Select where to move this {selectedItem?.metadata?.entity_type || 'item'}.
+                Select where to move this {selectedItem?.metadata?.entity_type as string || 'item'}.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">

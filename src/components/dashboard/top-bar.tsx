@@ -138,7 +138,7 @@ function TopBarComponent({ currentSpace, onSpaceChange, hideSpaceSelector = fals
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 rounded-full p-0">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={userStore.profile?.avatar_url} />
+                <AvatarImage src={userStore.profile?.avatar_url || undefined} />
                 <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
                   {getInitials(userStore.displayName)}
                 </AvatarFallback>

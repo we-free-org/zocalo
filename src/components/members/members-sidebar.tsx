@@ -413,7 +413,7 @@ export const MembersSidebar = observer(({ selectedMember, onMemberSelect, refres
             console.log(`Error loading additional data for profile ${profile.id}:`, error)
             return {
               ...profile,
-              email: profile.id === userStore.user?.id ? userStore.user.email || '' : profile.email || 'email@hidden.com',
+              email: profile.id === userStore.user?.id ? userStore.user?.email || '' : profile.email || 'email@hidden.com',
               global_role: undefined,
               space_permissions: []
             }

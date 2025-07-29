@@ -308,40 +308,59 @@ export function MessageView({ config }: MessageViewProps) {
         console.error('Failed to load messages:', error)
       } else {
         // Transform the data to match our Message interface  
-        const formattedMessages = (data || []).map((msg: unknown) => ({
-          id: (msg as Record<string, unknown>).id,
-          content: (msg as Record<string, unknown>).content,
-          created_at: (msg as Record<string, unknown>).created_at,
-          updated_at: msg.updated_at,
-          is_edited: msg.is_edited,
-          edited_at: msg.edited_at,
-          encryption_type: msg.encryption_type,
-          status: msg.status,
-          deleted_by: msg.deleted_by,
-          deleted_at: msg.deleted_at,
-          parent_message_id: msg.parent_message_id,
-          parent_message: msg.parent_message ? {
-            id: msg.parent_message.id,
-            content: msg.parent_message.content,
-            created_at: msg.parent_message.created_at,
-            is_edited: msg.parent_message.is_edited,
-            encryption_type: msg.parent_message.encryption_type,
-            user: {
-              id: msg.parent_message.profiles?.id || '',
-              first_name: msg.parent_message.profiles?.first_name,
-              last_name: msg.parent_message.profiles?.last_name
-            }
-          } : undefined,
-          user: {
-            id: msg.profiles?.id || '',
-            first_name: msg.profiles?.first_name,
-            last_name: msg.profiles?.last_name,
-            avatar_url: msg.profiles?.avatar_url
+        const formattedMessages = (data || []).map((msg: unknown) => {
+          const msgRecord = msg as Record<string, unknown>
+          const profilesRecord = msgRecord.profiles as Record<string, unknown> | undefined
+          const parentMessageRecord = msgRecord.parent_message as Record<string, unknown> | undefined
+          const parentProfilesRecord = parentMessageRecord?.profiles as Record<string, unknown> | undefined
+          
+          return {
+            id: msgRecord.id,
+            content: msgRecord.content,
+            created_at: msgRecord.created_at,
+            updated_at: msgRecord.updated_at,
+            is_edited: msgRecord.is_edited,
+            edited_at: msgRecord.edited_at,
+            encryption_type: msgRecord.encryption_type,
+            status: msgRecord.status,
+            deleted_by: msgRecord.deleted_by,
+            deleted_at: msgRecord.deleted_at,
+            parent_message_id: msgRecord.parent_message_id,
+            parent_message: parentMessageRecord ? {
+              id: parentMessageRecord.id,
+              content: parentMessageRecord.content,
+              created_at: parentMessageRecord.created_at,
+              is_edited: parentMessageRecord.is_edited,
+              encryption_type: parentMessageRecord.encryption_type,
+              user: {
+                id: parentProfilesRecord?.id || '',
+                first_name: parentProfilesRecord?.first_name || '',
+                last_name: parentProfilesRecord?.last_name || '',
+                email: parentProfilesRecord?.email || '',
+                avatar_url: parentProfilesRecord?.avatar_url
+              }
+            } : undefined,
+                         created_by: msgRecord.created_by,
+             user_id_hash: msgRecord.user_id_hash,
+             user: {
+               id: profilesRecord?.id || '',
+               first_name: profilesRecord?.first_name,
+               last_name: profilesRecord?.last_name,
+               avatar_url: profilesRecord?.avatar_url
+             },
+             profiles: profilesRecord ? {
+               id: profilesRecord.id,
+               first_name: profilesRecord.first_name,
+               last_name: profilesRecord.last_name,
+               email: profilesRecord.email,
+               avatar_url: profilesRecord.avatar_url
+             } : null
           }
-        }))
+        })
 
         // Decrypt messages if needed
-        await decryptMessages(formattedMessages)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await decryptMessages(formattedMessages as any)
       }
     } catch (error) {
       console.error('Failed to load messages:', error)

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -13,7 +13,7 @@ import { Avatar } from '@/components/ui/avatar'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Loader2, Upload, User, Lock, Trash2 } from 'lucide-react'
 
-export default function CompleteProfilePage() {
+function CompleteProfileContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isLoading, setIsLoading] = useState(false)
@@ -516,5 +516,13 @@ export default function CompleteProfilePage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function CompleteProfilePage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CompleteProfileContent />
+    </Suspense>
   )
 } 
