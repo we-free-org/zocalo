@@ -168,7 +168,7 @@ export async function updateProjectTask(
   const updatedContent = { ...currentTask.parsedContent, ...updates }
   
   // Update parent if list changed
-  const updateData: any = {
+  const updateData = {
     title: updatedContent.title,
     summary: updatedContent.description,
     content: updatedContent,

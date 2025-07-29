@@ -49,7 +49,7 @@ function MoveItemSelector({ files, selectedItem, onMove, onCancel }: MoveItemSel
   // Get only folders for the destination selector
   const folders = files.filter(file => 
     file.metadata?.entity_type === 'folder' || 
-    (file as any).type === 'folder'
+    (file as unknown as { type: string }).type === 'folder'
   )
 
   // Build folder hierarchy

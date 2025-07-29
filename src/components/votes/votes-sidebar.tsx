@@ -531,7 +531,8 @@ export const VotesSidebar = observer(({ selectedVote, onVoteSelect }: VotesSideb
                  <Label>Result visibility</Label>
                  <RadioGroup 
                    value={newVote.vote_result_visibility} 
-                   onValueChange={(value: any) => setNewVote(prev => ({ ...prev, vote_result_visibility: value }))}
+                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  onValueChange={(value: any) => setNewVote(prev => ({ ...prev, vote_result_visibility: value }))}
                    className="mt-3"
                  >
                   <div className="flex items-center space-x-2">

@@ -2,7 +2,6 @@ import crypto from 'crypto'
 
 // AES-256-CBC encryption configuration
 const ALGORITHM = 'aes-256-cbc'
-const IV_LENGTH = 16
 const SALT_LENGTH = 32
 const ITERATIONS = 100000
 

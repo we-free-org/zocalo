@@ -10,7 +10,7 @@ export interface Entity {
   title: string
   summary?: string | null
   content?: string | null // JSON string containing entity-specific data
-  metadata: Record<string, any>
+  metadata: Record<string, unknown>
   status: 'approved' | 'deleted' | 'pending_approval' | 'draft'
   encryption_type: 'none' | 'instance_key' | 'e2ee'
   is_edited: boolean
@@ -32,7 +32,7 @@ export interface EntitySchema {
   version: string
   name: string
   description?: string
-  schema: Record<string, any> // JSON Schema
+  schema: Record<string, unknown> // JSON Schema
   is_active: boolean
   created_by?: string | null
   created_at: string
@@ -86,8 +86,8 @@ export interface CreateEntityInput {
   parent_type?: string | null
   title: string
   summary?: string | null
-  content?: any // Entity-specific data that will be JSON serialized
-  metadata?: Record<string, any>
+  content?: unknown // Entity-specific data that will be JSON serialized
+  metadata?: Record<string, unknown>
   status?: 'approved' | 'deleted' | 'pending_approval' | 'draft'
   encryption_type?: 'none' | 'instance_key' | 'e2ee'
   created_by: string | null // Allow null for anonymous submissions
@@ -97,8 +97,8 @@ export interface CreateEntityInput {
 export interface UpdateEntityInput {
   title?: string
   summary?: string | null
-  content?: any // Entity-specific data that will be JSON serialized
-  metadata?: Record<string, any>
+  content?: unknown // Entity-specific data that will be JSON serialized
+  metadata?: Record<string, unknown>
   status?: 'approved' | 'deleted' | 'pending_approval' | 'draft'
   encryption_type?: 'none' | 'instance_key' | 'e2ee'
   edited_by: string
@@ -152,12 +152,12 @@ class EntityService {
   }
 
   // Validate entity content against schema
-  private validateEntityContent(type: string, content: any, schema: EntitySchema): boolean {
+  private validateEntityContent(type: string, content: unknown, schema: EntitySchema): boolean {
     // Basic validation - in a real app you'd want a proper JSON Schema validator
-    const requiredFields = schema.schema.required || []
+    const requiredFields = Array.isArray(schema.schema.required) ? schema.schema.required : []
     
     for (const field of requiredFields) {
-      if (!content || content[field] === undefined || content[field] === null || content[field] === '') {
+      if (!content || (content as Record<string, unknown>)[field] === undefined || (content as Record<string, unknown>)[field] === null || (content as Record<string, unknown>)[field] === '') {
         console.error(`Required field ${field} missing for entity type ${type}`)
         return false
       }
@@ -167,6 +167,7 @@ class EntityService {
   }
 
   // Parse entity content from JSON string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private parseEntityContent(entity: Entity): any {
     if (!entity.content) return {}
     
@@ -240,6 +241,7 @@ class EntityService {
   }
 
   // Get entity with parsed content
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async getEntityWithContent<T = any>(id: string): Promise<(Entity & { parsedContent: T }) | null> {
     const entity = await this.getEntity(id)
     if (!entity) return null
@@ -309,6 +311,7 @@ class EntityService {
   }
 
   // Query entities with parsed content
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async queryEntitiesWithContent<T = any>(filters: EntityQueryFilters = {}): Promise<(Entity & { parsedContent: T })[]> {
     const entities = await this.queryEntities(filters)
     return entities.map(entity => ({
@@ -340,6 +343,7 @@ class EntityService {
     }
 
     // Prepare update data
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: any = {
       edited_by: input.edited_by,
       edited_at: new Date().toISOString(),
@@ -410,6 +414,7 @@ class EntityService {
   }
 
   // Get children with parsed content
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async getEntityChildrenWithContent<T = any>(parentId: string, filters: Omit<EntityQueryFilters, 'parent_id'> = {}): Promise<(Entity & { parsedContent: T })[]> {
     return this.queryEntitiesWithContent({ ...filters, parent_id: parentId })
   }

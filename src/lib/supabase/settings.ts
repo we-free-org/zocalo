@@ -35,11 +35,11 @@ export async function getGlobalSettings(): Promise<GlobalSettings> {
       acc[setting.key] = setting.value
     }
     return acc
-  }, {} as Record<string, any>)
+  }, {} as Record<string, string | boolean | number>)
 
   return {
-    instanceName: settingsMap.instance_name || 'Zocalo Instance',
-    instanceDomain: settingsMap.instance_domain || '',
+    instanceName: String(settingsMap.instance_name || 'Zocalo Instance'),
+    instanceDomain: String(settingsMap.instance_domain || ''),
     allowPublicSignup: settingsMap.allow_public_signup !== false,
     requireEmailConfirmation: settingsMap.require_email_confirmation !== false,
     setupCompleted: settingsMap.setup_completed === true

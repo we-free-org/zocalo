@@ -77,31 +77,31 @@ export const SpaceStore = types
         console.log('SpaceStore: Raw spaces data:', userRoles)
         
         // Extract spaces from the user_roles join
-        const spaces = userRoles?.map((ur: any) => ur.spaces).filter(Boolean) || []
+        const spaces = userRoles?.map((ur: { spaces: unknown }) => ur.spaces).filter(Boolean) || []
         console.log('SpaceStore: Processed spaces:', spaces.length)
         
         // Clear and add spaces
         self.spaces.clear()
-        spaces.forEach((space: any) => {
-          self.spaces.push(space)
+        spaces.forEach((space: Record<string, unknown>) => {
+          self.spaces.push(space as Parameters<typeof self.spaces.push>[0])
         })
         
                 // Restore saved space or default to General, then first space
         if (spaces.length > 0 && !self.currentSpaceId) {
           // Try to restore from localStorage first
           const savedSpaceId = typeof window !== 'undefined' ? localStorage.getItem('currentSpaceId') : null
-          const savedSpace = savedSpaceId ? spaces.find((s: any) => s.id === savedSpaceId) : null
+          const savedSpace = savedSpaceId ? spaces.find((s: Record<string, unknown>) => s.id === savedSpaceId) : null
           
           if (savedSpace) {
             console.log('SpaceStore: Restored space from localStorage:', savedSpace.name)
             self.currentSpaceId = savedSpace.id
           } else {
             // Try to find "General" space first
-            const generalSpace = spaces.find((s: any) => s.name.toLowerCase() === 'general')
+            const generalSpace = spaces.find((s: Record<string, unknown>) => (s.name as string)?.toLowerCase() === 'general')
             
             if (generalSpace) {
               console.log('SpaceStore: Setting General as default space')
-              self.currentSpaceId = generalSpace.id
+              self.currentSpaceId = generalSpace.id as string
             } else {
               console.log('SpaceStore: Setting first space as current:', spaces[0].name)
               self.currentSpaceId = spaces[0].id

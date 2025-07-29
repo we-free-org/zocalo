@@ -33,7 +33,7 @@ function VoteDetails({ vote }: { vote: Vote }) {
   const userStore = useUserStore()
   const spaceStore = useSpaceStore()
   const [selectedOptions, setSelectedOptions] = useState<number[]>([])
-  const [userVotes, setUserVotes] = useState<any[]>([])
+  const [userVotes, setUserVotes] = useState<unknown[]>([])
   const [voteResults, setVoteResults] = useState<{ [key: number]: number }>({})
   const [isVoting, setIsVoting] = useState(false)
   const [hasVoted, setHasVoted] = useState(false)
@@ -62,12 +62,13 @@ function VoteDetails({ vote }: { vote: Vote }) {
         })
 
         let userHasVoted = false
-        const userSubmissions: any[] = []
+        const userSubmissions: unknown[] = []
 
-        voteSubmissions.forEach((submission: any) => {
-          const content = submission.parsedContent
-          if (content.choice_index !== undefined) {
-            results[content.choice_index] = (results[content.choice_index] || 0) + 1
+        voteSubmissions.forEach((submission: unknown) => {
+          const content = (submission as Record<string, unknown>).parsedContent
+          if ((content as Record<string, unknown>).choice_index !== undefined) {
+            const choiceIndex = (content as Record<string, unknown>).choice_index as number
+            results[choiceIndex] = (results[choiceIndex] || 0) + 1
           }
 
           // Check if current user has voted
@@ -150,7 +151,8 @@ function VoteDetails({ vote }: { vote: Vote }) {
       // Create vote submissions for each selected option
       const submissions = await Promise.all(
         selectedOptions.map(async (choiceIndex) => {
-          const submissionData: any = {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const submissionData: any = {
             vote_id: vote.id,
             choice_index: choiceIndex,
             timestamp: new Date().toISOString()

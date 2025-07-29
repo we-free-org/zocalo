@@ -173,7 +173,7 @@ export function MessageView({ config }: MessageViewProps) {
 
       // Create a map of decrypted content by message ID
       const decryptedMap = new Map(
-        decryptedMessages.map((msg: any) => [msg.id, msg.content])
+        decryptedMessages.map((msg: Record<string, unknown>) => [msg.id, msg.content])
       )
 
       console.log('DecryptMessages: Successfully decrypted', decryptedMessages.length, 'messages')
@@ -308,10 +308,10 @@ export function MessageView({ config }: MessageViewProps) {
         console.error('Failed to load messages:', error)
       } else {
         // Transform the data to match our Message interface  
-        const formattedMessages = (data || []).map((msg: any) => ({
-          id: msg.id,
-          content: msg.content,
-          created_at: msg.created_at,
+        const formattedMessages = (data || []).map((msg: unknown) => ({
+          id: (msg as Record<string, unknown>).id,
+          content: (msg as Record<string, unknown>).content,
+          created_at: (msg as Record<string, unknown>).created_at,
           updated_at: msg.updated_at,
           is_edited: msg.is_edited,
           edited_at: msg.edited_at,

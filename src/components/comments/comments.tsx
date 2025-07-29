@@ -67,7 +67,7 @@ export const Comments = observer(({ parentId, parentType, className = '' }: Comm
           // Map comments with profiles
           const commentsWithProfiles: Comment[] = commentEntities.map(comment => ({
             id: comment.id,
-            content: (comment.parsedContent as any)?.content || comment.metadata?.text_content || '',
+            content: (comment.parsedContent as Record<string, unknown>)?.content as string || comment.metadata?.text_content as string || '',
             created_at: comment.created_at,
             created_by: comment.created_by,
             profiles: profilesData?.find(profile => profile.id === comment.created_by) || null

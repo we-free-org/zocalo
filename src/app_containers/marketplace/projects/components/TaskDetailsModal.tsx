@@ -284,7 +284,7 @@ export function TaskDetailsModal({
                 {isEditing ? (
                   <Select
                     value={editedTask.status}
-                    onValueChange={(value: any) => setEditedTask(prev => ({ ...prev, status: value }))}
+                    onValueChange={(value: string) => setEditedTask(prev => ({ ...prev, status: value as "done" | "todo" | "in_progress" | "review" | "blocked" }))}
                   >
                     <SelectTrigger className="mt-1">
                       <SelectValue />
@@ -309,7 +309,7 @@ export function TaskDetailsModal({
                 {isEditing ? (
                   <Select
                     value={editedTask.priority}
-                    onValueChange={(value: any) => setEditedTask(prev => ({ ...prev, priority: value }))}
+                    onValueChange={(value: string) => setEditedTask(prev => ({ ...prev, priority: value as "low" | "medium" | "high" | "urgent" }))}
                   >
                     <SelectTrigger className="mt-1">
                       <SelectValue />

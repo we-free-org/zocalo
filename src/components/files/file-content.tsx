@@ -201,7 +201,7 @@ export const FileContent = observer(({ file, onFileUpdate }: FileContentProps) =
   const userStore = useUserStore()
 
   // Don't render anything for folders
-  if (file && (file.metadata?.entity_type === 'folder' || (file as any).type === 'folder')) {
+  if (file && (file.metadata?.entity_type === 'folder' || (file as unknown as { type: string }).type === 'folder')) {
     return <EmptyFileState />
   }
 
