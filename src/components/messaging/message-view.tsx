@@ -170,13 +170,26 @@ export function MessageView({ config }: MessageViewProps) {
       }
 
       const { messages: decryptedMessages } = await response.json()
+      
+      // Check for decryption errors
+      const failedDecryptions = decryptedMessages.filter((msg: Record<string, unknown>) => msg.decryption_error === true)
+      const successfulDecryptions = decryptedMessages.filter((msg: Record<string, unknown>) => msg.decryption_error !== true)
+      
+      if (failedDecryptions.length > 0) {
+        console.error('DecryptMessages: Failed to decrypt', failedDecryptions.length, 'messages')
+        failedDecryptions.forEach((msg: Record<string, unknown>) => {
+          console.error('Failed message ID:', msg.id, 'Content:', msg.content)
+        })
+      }
+      
+      if (successfulDecryptions.length > 0) {
+        console.log('DecryptMessages: Successfully decrypted', successfulDecryptions.length, 'messages')
+      }
 
-      // Create a map of decrypted content by message ID
+      // Create a map of decrypted content by message ID - only include successfully decrypted messages
       const decryptedMap = new Map(
-        decryptedMessages.map((msg: Record<string, unknown>) => [msg.id, msg.content])
+        successfulDecryptions.map((msg: Record<string, unknown>) => [msg.id, msg.content])
       )
-
-      console.log('DecryptMessages: Successfully decrypted', decryptedMessages.length, 'messages')
 
       // Replace encrypted content with decrypted content for both main and parent messages
       const updatedMessages = messages.map(msg => ({

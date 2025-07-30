@@ -13,6 +13,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Check if encryption key is available
+    if (!process.env.ENCRYPTION_KEY) {
+      console.error('ENCRYPTION_KEY environment variable is not set')
+      return NextResponse.json(
+        { error: 'Server encryption configuration error' },
+        { status: 500 }
+      )
+    }
+    
+    console.log('Decrypt API: Processing', messages.length, 'messages with encryption key available:', !!process.env.ENCRYPTION_KEY)
+
     // Verify user is authenticated
     const authHeader = request.headers.get('authorization')
     if (!authHeader?.startsWith('Bearer ')) {
@@ -36,15 +47,19 @@ export async function POST(request: NextRequest) {
     const decryptedMessages = messages.map((msg: { id: string; content: string; encryption_type: string; [key: string]: unknown }) => {
       try {
         if (msg.encryption_type === 'instance_key' && msg.content) {
+          console.log(`Attempting to decrypt message ${msg.id}, content length: ${msg.content.length}`)
+          const decryptedContent = decryptMessage(msg.content)
+          console.log(`Successfully decrypted message ${msg.id}, decrypted length: ${decryptedContent.length}`)
           return {
             ...msg,
-            content: decryptMessage(msg.content)
+            content: decryptedContent
           }
         }
         // Return unencrypted messages as-is
         return msg
       } catch (error) {
         console.error(`Failed to decrypt message ${msg.id}:`, error)
+        console.error(`Message details - ID: ${msg.id}, encryption_type: ${msg.encryption_type}, content_length: ${msg.content?.length || 0}`)
         // Return with decryption error indicator
         return {
           ...msg,
@@ -53,6 +68,11 @@ export async function POST(request: NextRequest) {
         }
       }
     })
+
+    const successCount = decryptedMessages.filter(msg => !msg.decryption_error).length
+    const errorCount = decryptedMessages.filter(msg => msg.decryption_error).length
+    
+    console.log(`Decrypt API: Completed processing. Success: ${successCount}, Errors: ${errorCount}`)
 
     return NextResponse.json({
       messages: decryptedMessages

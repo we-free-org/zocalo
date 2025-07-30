@@ -1,9 +1,6 @@
-import crypto from 'crypto'
+import CryptoJS from 'crypto-js'
 
-// AES-256-CBC encryption configuration
-const ALGORITHM = 'aes-256-cbc'
-const SALT_LENGTH = 32
-const IV_LENGTH = 16  // AES block size
+// Encryption configuration
 const ITERATIONS = 100000
 
 // Get encryption key from environment
@@ -15,39 +12,36 @@ function getEncryptionKey(): string {
   return key
 }
 
-// Derive key from master key and salt using PBKDF2
-function deriveKey(masterKey: string, salt: Buffer): Buffer {
-  return crypto.pbkdf2Sync(masterKey, salt, ITERATIONS, 32, 'sha512')
-}
-
-// Encrypt text using AES-256-CBC
+// Encrypt text using AES with PBKDF2 key derivation
 export function encryptMessage(plaintext: string): string {
   try {
     const masterKey = getEncryptionKey()
     
-    // Generate random salt and IV
-    const salt = crypto.randomBytes(SALT_LENGTH)
-    const iv = crypto.randomBytes(IV_LENGTH)
+    // Generate random salt
+    const salt = CryptoJS.lib.WordArray.random(256/8) // 32 bytes
     
-    // Derive encryption key
-    const key = deriveKey(masterKey, salt)
+    // Derive key using PBKDF2
+    const key = CryptoJS.PBKDF2(masterKey, salt, {
+      keySize: 256/32, // 32 bytes
+      iterations: ITERATIONS,
+      hasher: CryptoJS.algo.SHA512
+    })
     
-    // Create cipher with proper IV
-    const cipher = crypto.createCipheriv(ALGORITHM, key, iv)
+    // Generate random IV
+    const iv = CryptoJS.lib.WordArray.random(128/8) // 16 bytes
     
-    // Encrypt the plaintext
-    let encrypted = cipher.update(plaintext, 'utf8', 'hex')
-    encrypted += cipher.final('hex')
+    // Encrypt using AES-256-CBC
+    const encrypted = CryptoJS.AES.encrypt(plaintext, key, {
+      iv: iv,
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Pkcs7
+    })
     
     // Combine salt + iv + encrypted data
-    const combined = Buffer.concat([
-      salt,
-      iv,
-      Buffer.from(encrypted, 'hex')
-    ])
+    const combined = salt.concat(iv).concat(encrypted.ciphertext)
     
     // Return base64 encoded result
-    return combined.toString('base64')
+    return CryptoJS.enc.Base64.stringify(combined)
     
   } catch (error) {
     console.error('Encryption error:', error)
@@ -55,30 +49,46 @@ export function encryptMessage(plaintext: string): string {
   }
 }
 
-// Decrypt text using AES-256-CBC
+// Decrypt text using AES with PBKDF2 key derivation
 export function decryptMessage(encryptedData: string): string {
   try {
     const masterKey = getEncryptionKey()
     
-    // Decode from base64
-    const combined = Buffer.from(encryptedData, 'base64')
+    // Parse base64 data
+    const combined = CryptoJS.enc.Base64.parse(encryptedData)
     
-    // Extract components: salt + iv + encrypted data
-    const salt = combined.subarray(0, SALT_LENGTH)
-    const iv = combined.subarray(SALT_LENGTH, SALT_LENGTH + IV_LENGTH)
-    const encrypted = combined.subarray(SALT_LENGTH + IV_LENGTH)
+    // Extract components
+    const salt = CryptoJS.lib.WordArray.create(combined.words.slice(0, 8)) // 32 bytes = 8 words
+    const iv = CryptoJS.lib.WordArray.create(combined.words.slice(8, 12)) // 16 bytes = 4 words  
+    const encrypted = CryptoJS.lib.WordArray.create(combined.words.slice(12)) // remaining bytes
     
-    // Derive decryption key
-    const key = deriveKey(masterKey, salt)
+    // Derive key using same parameters
+    const key = CryptoJS.PBKDF2(masterKey, salt, {
+      keySize: 256/32, // 32 bytes
+      iterations: ITERATIONS,
+      hasher: CryptoJS.algo.SHA512
+    })
     
-    // Create decipher with proper IV
-    const decipher = crypto.createDecipheriv(ALGORITHM, key, iv)
+    // Create cipher params object
+    const cipherParams = CryptoJS.lib.CipherParams.create({
+      ciphertext: encrypted
+    })
     
-    // Decrypt the data
-    let decrypted = decipher.update(encrypted, undefined, 'utf8')
-    decrypted += decipher.final('utf8')
+    // Decrypt using AES-256-CBC
+    const decrypted = CryptoJS.AES.decrypt(cipherParams, key, {
+      iv: iv,
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Pkcs7
+    })
     
-    return decrypted
+    // Convert to UTF8 string
+    const decryptedText = decrypted.toString(CryptoJS.enc.Utf8)
+    
+    if (!decryptedText) {
+      throw new Error('Decryption resulted in empty string')
+    }
+    
+    return decryptedText
     
   } catch (error) {
     console.error('Decryption error:', error)
