@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+// Type definitions are handled with Record<string, unknown> for flexibility
+
 // Create admin client for server-side operations
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -62,13 +64,18 @@ export async function GET(request: NextRequest) {
     }
 
     // Transform spaces data
-    const spaces = userRoles?.map((role: any) => ({
-      id: role.spaces.id,
-      name: role.spaces.name,
-      description: role.spaces.description,
-      created_at: role.spaces.created_at,
-      user_role: role.role
-    })) || []
+    const spaces = userRoles?.map((role: unknown) => {
+      const roleData = role as Record<string, unknown>;
+      const spaceData = roleData.spaces as Record<string, unknown>;
+      
+      return {
+        id: spaceData.id,
+        name: spaceData.name,
+        description: spaceData.description,
+        created_at: spaceData.created_at,
+        user_role: roleData.role
+      };
+    }) || []
 
     // Get instance settings
     const { data: instanceSettings } = await supabaseAdmin
@@ -77,7 +84,8 @@ export async function GET(request: NextRequest) {
       .eq('scope', 'global')
       .in('key', ['instance_name', 'allow_public_signup'])
 
-    const settings = instanceSettings?.reduce((acc, setting) => {
+    const settings = instanceSettings?.reduce((acc, setting: Record<string, unknown>) => {
+      const key = setting.key as string;
       let value = setting.value
       try {
         // Try to parse JSON values
@@ -87,9 +95,9 @@ export async function GET(request: NextRequest) {
       } catch {
         // Keep original value if not JSON
       }
-      acc[setting.key] = value
+      acc[key] = value
       return acc
-    }, {} as Record<string, any>) || {}
+    }, {} as Record<string, unknown>) || {}
 
     return NextResponse.json({
       success: true,
@@ -113,7 +121,7 @@ export async function GET(request: NextRequest) {
 }
 
 // Handle preflight requests for CORS
-export async function OPTIONS(request: NextRequest) {
+export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
     headers: {

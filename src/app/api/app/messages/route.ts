@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+// Type definitions
+interface MessageData {
+  content: string;
+  user_id: string;
+  encryption_type: string;
+  status: string;
+  channel_id?: string;
+  conversation_id?: string;
+}
+
 // Create admin client for server-side operations
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -72,22 +82,27 @@ export async function GET(request: NextRequest) {
     }
 
     // Transform messages to match expected format
-    const formattedMessages = (messages || []).map((msg: any) => ({
-      id: msg.id,
-      content: msg.content,
-      created_at: msg.created_at,
-      updated_at: msg.updated_at,
-      is_edited: msg.is_edited,
-      edited_at: msg.edited_at,
-      encryption_type: msg.encryption_type,
-      status: msg.status,
-      user: {
-        id: msg.profiles?.id || msg.user_id,
-        first_name: msg.profiles?.first_name,
-        last_name: msg.profiles?.last_name,
-        avatar_url: msg.profiles?.avatar_url
-      }
-    }))
+    const formattedMessages = (messages || []).map((msg: unknown) => {
+      const message = msg as Record<string, unknown>;
+      const profiles = message.profiles as Record<string, unknown> | undefined;
+      
+      return {
+        id: message.id,
+        content: message.content,
+        created_at: message.created_at,
+        updated_at: message.updated_at,
+        is_edited: message.is_edited,
+        edited_at: message.edited_at,
+        encryption_type: message.encryption_type,
+        status: message.status,
+        user: {
+          id: profiles?.id || message.user_id,
+          first_name: profiles?.first_name,
+          last_name: profiles?.last_name,
+          avatar_url: profiles?.avatar_url
+        }
+      };
+    })
 
     return NextResponse.json({
       success: true,
@@ -128,7 +143,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create message
-    const messageData: any = {
+    const newMessageData: MessageData = {
       content: content.trim(),
       user_id: user.id,
       encryption_type: 'none', // TODO: Implement encryption if needed
@@ -136,14 +151,14 @@ export async function POST(request: NextRequest) {
     }
 
     if (channelId) {
-      messageData.channel_id = channelId
+      newMessageData.channel_id = channelId
     } else {
-      messageData.conversation_id = conversationId
+      newMessageData.conversation_id = conversationId
     }
 
     const { data: message, error: createError } = await supabaseAdmin
       .from('messages')
-      .insert(messageData)
+      .insert(newMessageData)
       .select(`
         id,
         content,
@@ -164,15 +179,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Format response
+    const responseMessage = message as Record<string, unknown>;
+    const profiles = responseMessage.profiles as Record<string, unknown> | undefined;
+    
     const formattedMessage = {
-      id: message.id,
-      content: message.content,
-      created_at: message.created_at,
+      id: responseMessage.id,
+      content: responseMessage.content,
+      created_at: responseMessage.created_at,
       user: {
-        id: (message as any).profiles?.id || message.user_id,
-        first_name: (message as any).profiles?.first_name,
-        last_name: (message as any).profiles?.last_name,
-        avatar_url: (message as any).profiles?.avatar_url
+        id: profiles?.id || responseMessage.user_id,
+        first_name: profiles?.first_name,
+        last_name: profiles?.last_name,
+        avatar_url: profiles?.avatar_url
       }
     }
 
@@ -289,7 +307,7 @@ export async function DELETE(request: NextRequest) {
 }
 
 // Handle preflight requests for CORS
-export async function OPTIONS(request: NextRequest) {
+export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
     headers: {
