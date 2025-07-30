@@ -3,6 +3,7 @@ import crypto from 'crypto'
 // AES-256-CBC encryption configuration
 const ALGORITHM = 'aes-256-cbc'
 const SALT_LENGTH = 32
+const IV_LENGTH = 16  // AES block size
 const ITERATIONS = 100000
 
 // Get encryption key from environment
@@ -24,22 +25,24 @@ export function encryptMessage(plaintext: string): string {
   try {
     const masterKey = getEncryptionKey()
     
-    // Generate random salt
+    // Generate random salt and IV
     const salt = crypto.randomBytes(SALT_LENGTH)
+    const iv = crypto.randomBytes(IV_LENGTH)
     
     // Derive encryption key
     const key = deriveKey(masterKey, salt)
     
-    // Create cipher
-    const cipher = crypto.createCipher(ALGORITHM, key)
+    // Create cipher with proper IV
+    const cipher = crypto.createCipheriv(ALGORITHM, key, iv)
     
     // Encrypt the plaintext
     let encrypted = cipher.update(plaintext, 'utf8', 'hex')
     encrypted += cipher.final('hex')
     
-    // Combine salt + encrypted data
+    // Combine salt + iv + encrypted data
     const combined = Buffer.concat([
       salt,
+      iv,
       Buffer.from(encrypted, 'hex')
     ])
     
@@ -60,15 +63,16 @@ export function decryptMessage(encryptedData: string): string {
     // Decode from base64
     const combined = Buffer.from(encryptedData, 'base64')
     
-    // Extract components
+    // Extract components: salt + iv + encrypted data
     const salt = combined.subarray(0, SALT_LENGTH)
-    const encrypted = combined.subarray(SALT_LENGTH)
+    const iv = combined.subarray(SALT_LENGTH, SALT_LENGTH + IV_LENGTH)
+    const encrypted = combined.subarray(SALT_LENGTH + IV_LENGTH)
     
     // Derive decryption key
     const key = deriveKey(masterKey, salt)
     
-    // Create decipher
-    const decipher = crypto.createDecipher(ALGORITHM, key)
+    // Create decipher with proper IV
+    const decipher = crypto.createDecipheriv(ALGORITHM, key, iv)
     
     // Decrypt the data
     let decrypted = decipher.update(encrypted, undefined, 'utf8')

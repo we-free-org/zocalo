@@ -44,38 +44,64 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch user profile' }, { status: 500 })
     }
 
-    // Get user's spaces through user_roles
+    // Get user's roles first
     const { data: userRoles, error: rolesError } = await supabaseAdmin
       .from('user_roles')
-      .select(`
-        role,
-        spaces (
-          id,
-          name,
-          description,
-          created_at
-        )
-      `)
+      .select('role_id, space_id')
       .eq('user_id', user.id)
 
     if (rolesError) {
-      console.error('Error fetching user spaces:', rolesError)
-      return NextResponse.json({ error: 'Failed to fetch user spaces' }, { status: 500 })
+      console.error('Error fetching user roles:', rolesError)
+      return NextResponse.json({ error: 'Failed to fetch user roles' }, { status: 500 })
     }
 
-    // Transform spaces data
-    const spaces = userRoles?.map((role: unknown) => {
-      const roleData = role as Record<string, unknown>;
-      const spaceData = roleData.spaces as Record<string, unknown>;
-      
-      return {
-        id: spaceData.id,
-        name: spaceData.name,
-        description: spaceData.description,
-        created_at: spaceData.created_at,
-        user_role: roleData.role
-      };
-    }) || []
+    let spaces: Array<{
+      id: string
+      name: string
+      description: string | null
+      created_at: string
+      user_role: string
+    }> = []
+
+    if (userRoles && userRoles.length > 0) {
+      // Get spaces for the user
+      const spaceIds = userRoles.map(role => role.space_id)
+      const { data: spacesData, error: spacesError } = await supabaseAdmin
+        .from('spaces')
+        .select('id, name, description, created_at')
+        .in('id', spaceIds)
+
+      if (spacesError) {
+        console.error('Error fetching spaces:', spacesError)
+        return NextResponse.json({ error: 'Failed to fetch user spaces' }, { status: 500 })
+      }
+
+      // Get roles data
+      const roleIds = userRoles.map(role => role.role_id)
+      const { data: rolesData, error: rolesDataError } = await supabaseAdmin
+        .from('roles')
+        .select('id, name')
+        .in('id', roleIds)
+
+      if (rolesDataError) {
+        console.error('Error fetching roles:', rolesDataError)
+        return NextResponse.json({ error: 'Failed to fetch roles' }, { status: 500 })
+      }
+
+      // Transform and combine the data
+      spaces = userRoles.map(userRole => {
+        const space = spacesData?.find(s => s.id === userRole.space_id)
+        const role = rolesData?.find(r => r.id === userRole.role_id)
+        
+        return {
+          id: space?.id || '',
+          name: space?.name || '',
+          description: space?.description || null,
+          created_at: space?.created_at || '',
+          user_role: role?.name || ''
+        }
+      }).filter(space => space.id) // Filter out any spaces that weren't found
+    }
 
     // Get instance settings
     const { data: instanceSettings } = await supabaseAdmin
