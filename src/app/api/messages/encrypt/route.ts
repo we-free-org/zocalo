@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { encryptMessage } from '@/lib/encryption'
 import { supabase } from '@/lib/supabase/client'
+import crypto from 'crypto'
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,6 +13,20 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    // Check if encryption key is available
+    if (!process.env.ENCRYPTION_KEY) {
+      console.error('ENCRYPTION_KEY environment variable is not set')
+      return NextResponse.json(
+        { error: 'Server encryption configuration error' },
+        { status: 500 }
+      )
+    }
+    
+    // Debug: Log encryption key hash to verify consistency across environments
+    const keyHash = crypto.createHash('sha256').update(process.env.ENCRYPTION_KEY).digest('hex').substring(0, 8)
+    console.log('Encrypt API: Encryption key hash (first 8 chars):', keyHash)
+    console.log('Encrypt API: Encrypting content with length:', content.length)
 
     // Verify user is authenticated
     const authHeader = request.headers.get('authorization')
@@ -34,6 +49,7 @@ export async function POST(request: NextRequest) {
 
     // Encrypt the message content
     const encryptedContent = encryptMessage(content)
+    console.log('Encrypt API: Successfully encrypted, output length:', encryptedContent.length)
 
     return NextResponse.json({
       encryptedContent,

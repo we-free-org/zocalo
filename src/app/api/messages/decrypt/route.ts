@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { decryptMessage } from '@/lib/encryption'
 import { supabase } from '@/lib/supabase/client'
+import crypto from 'crypto'
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,7 +23,10 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    console.log('Decrypt API: Processing', messages.length, 'messages with encryption key available:', !!process.env.ENCRYPTION_KEY)
+    // Debug: Log encryption key hash to verify consistency across environments
+    const keyHash = crypto.createHash('sha256').update(process.env.ENCRYPTION_KEY).digest('hex').substring(0, 8)
+    console.log('Decrypt API: Encryption key hash (first 8 chars):', keyHash)
+    console.log('Decrypt API: Processing', messages.length, 'messages')
 
     // Verify user is authenticated
     const authHeader = request.headers.get('authorization')
