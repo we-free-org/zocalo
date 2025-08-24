@@ -93,7 +93,7 @@ export default function SignupPage() {
           )
         } else {
           // Auto-signed in, redirect to dashboard
-          router.push('/dashboard')
+          router.push('/')
         }
       }
     } catch (err: unknown) {

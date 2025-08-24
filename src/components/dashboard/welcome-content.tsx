@@ -81,9 +81,9 @@ export const WelcomeContent = observer(() => {
   const handleSectionNavigation = (section: string) => {
     // Navigate to the appropriate route
     if (section === 'home') {
-      router.push('/dashboard')
+      router.push('/')
     } else {
-      router.push(`/dashboard/${section}`)
+      router.push(`/${section}`)
     }
   }
 

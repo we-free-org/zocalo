@@ -55,7 +55,7 @@ const EventsPageContent = observer(() => {
 
 export default function EventsPage() {
   return (
-    <AuthProvider>
+    <AuthProvider requireAuth={true}>
       <Suspense fallback={
         <div className="min-h-screen flex items-center justify-center">
           <div className="flex items-center space-x-2">

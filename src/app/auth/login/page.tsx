@@ -86,7 +86,7 @@ function LoginContent() {
         }
 
         // Redirect to dashboard or intended destination
-        const redirectTo = searchParams.get('redirectTo') || '/dashboard'
+        const redirectTo = searchParams.get('redirectTo') || '/'
         router.push(redirectTo)
       }
     } catch (err: unknown) {

@@ -47,20 +47,29 @@ const VotesContent = observer(() => {
   )
 })
 
-const VotesPage = observer(() => {
+const VotesPageContent = observer(() => {
   return (
     <DashboardLayout>
-      <AuthProvider>
-        <Suspense fallback={
-          <div className="flex items-center justify-center h-full">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        }>
-          <VotesContent />
-        </Suspense>
-      </AuthProvider>
+      <VotesContent />
     </DashboardLayout>
   )
 })
 
-export default VotesPage 
+export default function VotesPage() {
+  return (
+    <AuthProvider requireAuth={true}>
+      <Suspense fallback={
+        <DashboardLayout>
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center space-y-4">
+              <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+              <p className="text-muted-foreground">Loading votes...</p>
+            </div>
+          </div>
+        </DashboardLayout>
+      }>
+        <VotesPageContent />
+      </Suspense>
+    </AuthProvider>
+  )
+} 

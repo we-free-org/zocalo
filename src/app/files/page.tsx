@@ -47,20 +47,29 @@ const FilesContent = observer(() => {
   )
 })
 
-const FilesPage = observer(() => {
+const FilesPageContent = observer(() => {
   return (
     <DashboardLayout>
-      <AuthProvider>
-        <Suspense fallback={
-          <div className="flex items-center justify-center h-full">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        }>
-          <FilesContent />
-        </Suspense>
-      </AuthProvider>
+      <FilesContent />
     </DashboardLayout>
   )
 })
 
-export default FilesPage 
+export default function FilesPage() {
+  return (
+    <AuthProvider requireAuth={true}>
+      <Suspense fallback={
+        <DashboardLayout>
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center space-y-4">
+              <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+              <p className="text-muted-foreground">Loading files...</p>
+            </div>
+          </div>
+        </DashboardLayout>
+      }>
+        <FilesPageContent />
+      </Suspense>
+    </AuthProvider>
+  )
+} 

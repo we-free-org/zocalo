@@ -302,7 +302,7 @@ const ProfileContent = observer(() => {
               <Button 
                 type="button" 
                 variant="outline"
-                onClick={() => router.push('/dashboard')}
+                onClick={() => router.push('/')}
                 className="border-gray-300 text-gray-600 hover:bg-gray-50 rounded-full px-8"
               >
                 Cancel
@@ -386,7 +386,7 @@ const ProfilePageContent = observer(() => {
 
 export default function ProfilePage() {
   return (
-    <AuthProvider>
+    <AuthProvider requireAuth={true}>
       <Suspense fallback={
         <div className="min-h-screen flex items-center justify-center">
           <div className="flex items-center space-x-2">

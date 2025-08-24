@@ -151,7 +151,7 @@ function TopBarComponent({ currentSpace, onSpaceChange, hideSpaceSelector = fals
               <p className="text-xs text-muted-foreground">{userStore.userEmail}</p>
             </div>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => router.push('/dashboard/profile')}>
+            <DropdownMenuItem onClick={() => router.push('/profile')}>
               <User className="mr-2 h-4 w-4" />
               Profile
             </DropdownMenuItem>

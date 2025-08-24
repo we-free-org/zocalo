@@ -171,12 +171,12 @@ function CompleteProfileContent() {
         setSuccess('Profile updated successfully!')
         // Optional: redirect back to dashboard after a delay
         setTimeout(() => {
-          router.push('/dashboard')
+          router.push('/')
         }, 2000)
       } else {
         setSuccess('Profile completed successfully! Redirecting to dashboard...')
         setTimeout(() => {
-          router.push('/dashboard')
+          router.push('/')
         }, 2000)
       }
 
@@ -267,7 +267,7 @@ function CompleteProfileContent() {
           {isExistingUser && (
             <Button 
               variant="outline" 
-              onClick={() => router.push('/dashboard')}
+              onClick={() => router.push('/')}
               className="border-orange-200 text-orange-600 hover:bg-orange-50 hover:border-orange-300 rounded-full px-6"
             >
               ← Back to Dashboard
@@ -444,7 +444,7 @@ function CompleteProfileContent() {
                 <Button 
                   type="button" 
                   variant="outline"
-                  onClick={() => router.push('/dashboard')}
+                  onClick={() => router.push('/')}
                   className="border-gray-300 text-gray-600 hover:bg-gray-50 rounded-full px-6"
                 >
                   Cancel

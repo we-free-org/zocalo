@@ -1,11 +1,11 @@
 'use client'
 
-import { Suspense, use } from 'react'
+import { use, Suspense } from 'react'
 import { observer } from 'mobx-react-lite'
 import { DashboardLayout } from '@/components/layouts/dashboard-layout'
 import { AuthProvider } from '@/components/auth-provider'
+import { ProjectsMain } from '@/components/projects/projects-main'
 import { Loader2 } from 'lucide-react'
-import { ProjectsMain } from '@/app_containers/marketplace/projects'
 
 interface AppPageProps {
   params: Promise<{
@@ -54,4 +54,4 @@ export default function AppPage({ params }: AppPageProps) {
       </Suspense>
     </AuthProvider>
   )
-} 
+}

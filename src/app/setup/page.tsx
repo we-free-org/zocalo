@@ -45,7 +45,7 @@ export default function SetupPage() {
         const setupComplete = await isSetupCompleted()
         if (setupComplete) {
           // Setup already completed, redirect to dashboard
-          router.push('/dashboard')
+          router.push('/')
           return
         }
       } catch (error) {

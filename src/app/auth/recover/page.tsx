@@ -119,7 +119,7 @@ function RecoverContent() {
 
       setSuccess('Password updated successfully! Redirecting to dashboard...')
       setTimeout(() => {
-        router.push('/dashboard')
+        router.push('/')
       }, 2000)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to update password')

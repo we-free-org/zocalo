@@ -51,7 +51,7 @@ export function Sidebar({ currentSection, onSectionChange }: SidebarProps) {
       label: 'Apps', 
       icon: LayoutGrid,
       submenu: [
-        { id: 'projects', label: 'Projects App', href: '/dashboard/app/projects' }
+        { id: 'projects', label: 'Projects App', href: '/app/projects' }
       ]
     },
   ]
@@ -68,8 +68,8 @@ export function Sidebar({ currentSection, onSectionChange }: SidebarProps) {
     const Icon = item.icon
     const hasSubmenu = item.submenu && item.submenu.length > 0
     const isSubmenuOpen = openSubmenu === item.id
-    const isActive = pathname.includes(`/dashboard/${item.id}`) || 
-                    (pathname === '/dashboard' && item.id === 'home') ||
+    const isActive = pathname.includes(`/${item.id}`) || 
+                    (pathname === '/' && item.id === 'home') ||
                     (item.submenu && item.submenu.some(sub => pathname.includes(sub.href)))
 
     const handleClick = () => {
@@ -78,9 +78,9 @@ export function Sidebar({ currentSection, onSectionChange }: SidebarProps) {
       } else {
         onSectionChange(item.id)
         if (item.id === 'home') {
-          window.location.href = '/dashboard'
+          window.location.href = '/'
         } else {
-          window.location.href = `/dashboard/${item.id}`
+          window.location.href = `/${item.id}`
         }
       }
     }
