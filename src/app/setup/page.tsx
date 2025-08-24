@@ -119,7 +119,7 @@ export default function SetupPage() {
           </div>
           
           <div className="space-y-2">
-            <CardTitle className="text-3xl font-bold text-gray-900">Setup Zocalo</CardTitle>
+            <CardTitle className="text-3xl font-bold text-gray-900">Setup</CardTitle>
             <CardDescription className="text-gray-600 text-lg">
               Configure your Zocalo instance and create the administrator account
             </CardDescription>
